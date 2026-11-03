@@ -20,8 +20,8 @@ import (
 )
 
 func TestRecipientValidation(t *testing.T) {
-	got, err := normalizeRecipients([]string{" marcell@mikanm.me ", "marcell@mikanm.me", "other@example.com"})
-	if err != nil || !reflect.DeepEqual(got, []string{"marcell@mikanm.me", "other@example.com"}) {
+	got, err := normalizeRecipients([]string{" user@example.com ", "user@example.com", "other@example.com"})
+	if err != nil || !reflect.DeepEqual(got, []string{"user@example.com", "other@example.com"}) {
 		t.Fatalf("normalization: %v, %v", got, err)
 	}
 	for _, value := range []string{"", "invalid", "Name <a@example.com>", "a@example.com\r\nBcc: b@example.com", "a@example.com,b@example.com", "é@example.com"} {
@@ -43,7 +43,7 @@ func TestEmailValidationAndEncoding(t *testing.T) {
 	if validateEmailContent("subject", strings.Repeat("a", 10001)) == nil || validateEmailContent("subject", " ") == nil {
 		t.Fatal("accepted invalid body")
 	}
-	c := mailConfig{Username: "info@mikanm.me", FromName: "Cells"}
+	c := mailConfig{Username: "sender@example.com", FromName: "Cells"}
 	subject, body := "Pengingat 日本語 🌱", "Halo!\nBaris kedua.\n.Titik"
 	raw, err := emailMessage(c, subject, body)
 	if err != nil {
@@ -68,6 +68,7 @@ func TestEmailValidationAndEncoding(t *testing.T) {
 
 func TestMailConfig(t *testing.T) {
 	t.Setenv("SMTP_PASSWORD", "")
+	t.Setenv("SMTP_USERNAME", "sender@example.com")
 	c := loadMailConfig()
 	if c.validate() == nil {
 		t.Fatal("missing password accepted")
@@ -85,8 +86,21 @@ func TestMailConfig(t *testing.T) {
 	}
 }
 
+func TestMailDefaultsHaveNoPersonalAddresses(t *testing.T) {
+	t.Setenv("SMTP_USERNAME", "")
+	t.Setenv("NOTIFY_RECIPIENTS", "")
+	t.Setenv("SMTP_PASSWORD", "test-only")
+	c := loadMailConfig()
+	if c.Username != "" || len(c.DefaultRecipients) != 0 {
+		t.Fatal("email addresses must come from explicit configuration")
+	}
+	if c.validate() == nil {
+		t.Fatal("mail must be unavailable without an explicitly configured sender")
+	}
+}
+
 func TestHTMLMailContentType(t *testing.T) {
-	raw, err := emailMessage(mailConfig{Username: "info@mikanm.me", FromName: "Cells"}, "Reminder", "<table><tr><td>Tugas</td></tr></table>", "html")
+	raw, err := emailMessage(mailConfig{Username: "sender@example.com", FromName: "Cells"}, "Reminder", "<table><tr><td>Tugas</td></tr></table>", "html")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -152,7 +166,7 @@ func TestSMTPTransaction(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			err = submitEmail(client, "info@mikanm.me", []string{"first@example.com", "second@example.com"}, []byte("Subject: Test\r\n\r\nHello\r\n"))
+			err = submitEmail(client, "sender@example.com", []string{"first@example.com", "second@example.com"}, []byte("Subject: Test\r\n\r\nHello\r\n"))
 			client.Close()
 			seen := <-commands
 			switch scenario {

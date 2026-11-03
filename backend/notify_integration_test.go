@@ -48,7 +48,7 @@ func TestNotifyPostgres(t *testing.T) {
 	if _, err := db.Exec(`INSERT INTO sessions(token_hash,user_id,expires_at) VALUES($1,$2,CURRENT_TIMESTAMP + INTERVAL '1 hour')`, hashToken(token), u.ID); err != nil {
 		t.Fatal(err)
 	}
-	a := &App{db: db, mail: mailConfig{Host: "smtp.hostinger.com", Port: "465", Username: "info@mikanm.me", FromName: "Cells", DefaultRecipients: []string{"marcell@mikanm.me"}}}
+	a := &App{db: db, mail: mailConfig{Host: "smtp.hostinger.com", Port: "465", Username: "sender@example.com", FromName: "Cells", DefaultRecipients: []string{"user@example.com"}}}
 	request := func(method, path, body string) *httptest.ResponseRecorder {
 		r := httptest.NewRequest(method, path, strings.NewReader(body))
 		r.AddCookie(&http.Cookie{Name: cookieName, Value: token})
@@ -58,7 +58,7 @@ func TestNotifyPostgres(t *testing.T) {
 		return w
 	}
 	w := request("GET", "/api/notify", "")
-	if w.Code != 200 || !strings.Contains(w.Body.String(), "marcell@mikanm.me") || !strings.Contains(w.Body.String(), `"configured":false`) {
+	if w.Code != 200 || !strings.Contains(w.Body.String(), "user@example.com") || !strings.Contains(w.Body.String(), `"configured":false`) {
 		t.Fatalf("defaults: %d %s", w.Code, w.Body.String())
 	}
 	w = request("PUT", "/api/notify", `{"recipients":["first@example.com","first@example.com","second@example.com"]}`)
@@ -72,7 +72,7 @@ func TestNotifyPostgres(t *testing.T) {
 		t.Fatalf("persistence: %v, %v", saved, err)
 	}
 	other, err := fresh.notifyRecipients(User{ID: -1})
-	if err != nil || len(other) != 1 || other[0] != "marcell@mikanm.me" {
+	if err != nil || len(other) != 1 || other[0] != "user@example.com" {
 		t.Fatalf("user isolation: %v, %v", other, err)
 	}
 	w = request("PUT", "/api/notify", `{"recipients":["invalid"]}`)
@@ -138,7 +138,7 @@ func TestNotifyPostgres(t *testing.T) {
 		t.Fatalf("empty recipient send: %d", w.Code)
 	}
 
-	w = request("PUT", "/api/notify", `{"recipients":["marcell@mikanm.me"]}`)
+	w = request("PUT", "/api/notify", `{"recipients":["user@example.com"]}`)
 	if w.Code != 200 {
 		t.Fatal(w.Body.String())
 	}

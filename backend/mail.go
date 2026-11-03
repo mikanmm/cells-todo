@@ -27,9 +27,9 @@ type mailConfig struct {
 func loadMailConfig() mailConfig {
 	return mailConfig{
 		Host: env("SMTP_HOST", "smtp.hostinger.com"), Port: env("SMTP_PORT", "465"),
-		Username: env("SMTP_USERNAME", "info@mikanm.me"), Password: os.Getenv("SMTP_PASSWORD"),
+		Username: os.Getenv("SMTP_USERNAME"), Password: os.Getenv("SMTP_PASSWORD"),
 		FromName: env("SMTP_FROM_NAME", "Cells"),
-		DefaultRecipients: strings.FieldsFunc(env("NOTIFY_RECIPIENTS", "marcell@mikanm.me"), func(r rune) bool {
+		DefaultRecipients: strings.FieldsFunc(os.Getenv("NOTIFY_RECIPIENTS"), func(r rune) bool {
 			return r == ',' || r == ';' || r == '\n' || r == '\r'
 		}),
 	}
@@ -69,7 +69,7 @@ func normalizeRecipients(values []string) ([]string, error) {
 		address, err := mail.ParseAddress(value)
 		// Keep mailbox input unambiguous, ASCII-only, and safe for SMTP envelopes.
 		if err != nil || address.Address != value || len(value) > 254 || hasControl(value) || strings.ContainsFunc(value, func(r rune) bool { return r > 127 }) {
-			return nil, errors.New("Gunakan alamat email valid tanpa nama tampilan, misalnya marcell@mikanm.me.")
+			return nil, errors.New("Gunakan alamat email valid tanpa nama tampilan, misalnya user@example.com.")
 		}
 		key := strings.ToLower(value)
 		if !seen[key] {
