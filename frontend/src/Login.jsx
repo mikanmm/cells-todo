@@ -72,7 +72,8 @@ export default function Login({ onLogin }) {
         </form>
 
         <p className="login-note">
-          Akun dibuat oleh admin. Belum punya akun? Minta admin membuatkannya.
+          Akun dibuat oleh admin. Belum punya akun? Minta admin membuatkannya. Sesi berlaku 6 jam
+          sejak login, lalu Anda perlu masuk kembali.
         </p>
       </section>
     </main>
