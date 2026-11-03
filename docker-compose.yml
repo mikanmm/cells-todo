@@ -5,7 +5,7 @@ services:
     environment:
       POSTGRES_DB: cells
       POSTGRES_USER: cells
-      POSTGRES_PASSWORD: ${DB_PASSWORD:?isi DB_PASSWORD di file .env}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in the .env file}
       TZ: Asia/Jakarta
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -42,7 +42,7 @@ services:
     depends_on:
       - backend
     ports:
-      # Akses lokal; Cloudflare Tunnel dalam Docker mengarah ke http://web:80.
+      # Local access; the Docker-based Cloudflare Tunnel connects to http://web:80.
       - '127.0.0.1:${WEB_PORT:-8080}:80'
 
 volumes:

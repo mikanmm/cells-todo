@@ -1,15 +1,15 @@
-// Permata berfacet: enam bidang yang bisa "mengkristal" satu per satu.
+// Faceted gem: six surfaces that can crystallize individually.
 const FACETS = [
-  { points: '7,3 21,3 17,11 11,11', alpha: 0.55 }, // meja
-  { points: '7,3 11,11 1,11', alpha: 0.8 }, // mahkota kiri
-  { points: '21,3 27,11 17,11', alpha: 0.95 }, // mahkota kanan
-  { points: '1,11 11,11 14,26', alpha: 0.72 }, // paviliun kiri
-  { points: '11,11 17,11 14,26', alpha: 0.5 }, // paviliun tengah
-  { points: '17,11 27,11 14,26', alpha: 0.9 }, // paviliun kanan
+  { points: '7,3 21,3 17,11 11,11', alpha: 0.55 }, // table
+  { points: '7,3 11,11 1,11', alpha: 0.8 }, // left crown
+  { points: '21,3 27,11 17,11', alpha: 0.95 }, // right crown
+  { points: '1,11 11,11 14,26', alpha: 0.72 }, // left pavilion
+  { points: '11,11 17,11 14,26', alpha: 0.5 }, // center pavilion
+  { points: '17,11 27,11 14,26', alpha: 0.9 }, // right pavilion
 ]
 
-// Warna isi permata dan warna garis tepinya (garis dibuat lebih gelap agar
-// kotak centang tetap terlihat jelas di atas latar terang).
+// Gem fill and outline colors. Darker outlines keep the
+// checkbox visible against a light background.
 const TONES = {
   low: { fill: 'var(--aqua)', line: '#2e97a6' },
   medium: { fill: 'var(--amethyst)', line: '#6f5fd0' },
@@ -46,7 +46,7 @@ function GemSvg({ tone, filled, size, className = '' }) {
   )
 }
 
-// Kotak centang tugas. Menyala penuh (6 facet) saat tugas selesai.
+// Task checkbox. All six facets are filled when the task is complete.
 export function GemCheck({ priority, done, label, onToggle }) {
   return (
     <button
@@ -62,13 +62,13 @@ export function GemCheck({ priority, done, label, onToggle }) {
   )
 }
 
-// Permata progres: jumlah facet yang terisi mengikuti persentase tugas selesai.
+// Progress gem: filled facets represent the proportion of completed tasks.
 export function ProgressGem({ done, total }) {
   const filled = total === 0 ? 0 : done === total ? 6 : Math.min(5, Math.floor((done / total) * 6))
   return <GemSvg tone="var(--teal)" filled={filled} size={112} className="gem-progress" />
 }
 
-// Dekorasi statis untuk halaman masuk.
+// Static decoration for the sign-in page.
 export function GemStatic({ tone, size }) {
   return <GemSvg tone={tone} filled={6} size={size} />
 }

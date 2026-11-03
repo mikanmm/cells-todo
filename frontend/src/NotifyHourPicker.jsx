@@ -64,7 +64,7 @@ export default function NotifyHourPicker({ value, onChange, disabled }) {
         ref={trigger}
         type="button"
         className="btn btn-ghost"
-        aria-label={`Jam pengiriman ${value} WIB`}
+        aria-label={`Delivery time ${value} WIB`}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={listId}
@@ -86,7 +86,7 @@ export default function NotifyHourPicker({ value, onChange, disabled }) {
           id={listId}
           className="notify-hour-options"
           role="listbox"
-          aria-label="Jam pengiriman (WIB)"
+          aria-label="Delivery time (WIB)"
           onKeyDown={navigate}
         >
           {hours.map((hour) => (

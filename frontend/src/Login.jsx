@@ -33,7 +33,7 @@ export default function Login({ onLogin }) {
           <GemStatic tone="high" size={34} />
         </div>
         <h1 className="brand-title">cells</h1>
-        <p className="muted">Masuk untuk melihat daftar tugas Anda.</p>
+        <p className="muted">Sign in to view your tasks.</p>
 
         <form onSubmit={submit} className="login-form">
           <label className="field">
@@ -67,13 +67,13 @@ export default function Login({ onLogin }) {
           )}
 
           <button type="submit" className="btn btn-primary" disabled={busy}>
-            {busy ? 'Memeriksa…' : 'Masuk'}
+            {busy ? 'Checking…' : 'Sign in'}
           </button>
         </form>
 
         <p className="login-note">
-          Akun dibuat oleh admin. Belum punya akun? Minta admin membuatkannya. Sesi berlaku 6 jam
-          sejak login, lalu Anda perlu masuk kembali.
+          Accounts are created by an administrator. Please contact your administrator if you need an
+          account. Sessions expire six hours after sign-in, after which you must sign in again.
         </p>
       </section>
     </main>

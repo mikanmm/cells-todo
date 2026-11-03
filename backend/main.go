@@ -35,13 +35,13 @@ func main() {
 	}
 }
 
-const usageText = `Pemakaian:
-  server serve                                   jalankan API (default)
-  server adduser <username> <password> [nama]    buat akun baru
-  server passwd  <username> <password-baru>      ganti password akun
-  server hash    <password>                      cetak hash bcrypt (untuk INSERT manual lewat SQL)
+const usageText = `Usage:
+  server serve                                  start the API (default)
+  server adduser <username> <password> [name]     create an account
+  server passwd  <username> <new-password>       change an account password
+  server hash    <password>                     print a bcrypt hash for manual SQL inserts
 
-Gunakan "-" sebagai password untuk membaca password dari stdin.`
+Use "-" as the password argument to read the password from stdin.`
 
 func runServe() {
 	db, err := openDB()
@@ -51,7 +51,7 @@ func runServe() {
 	defer db.Close()
 
 	if err := migrate(db); err != nil {
-		log.Fatalf("migrasi: %v", err)
+		log.Fatalf("migration: %v", err)
 	}
 
 	app := newApp(db)
@@ -68,7 +68,7 @@ func runServe() {
 	}
 
 	go func() {
-		log.Printf("API berjalan di %s", srv.Addr)
+		log.Printf("API listening on %s", srv.Addr)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("server: %v", err)
 		}

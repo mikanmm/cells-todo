@@ -6,4 +6,4 @@ services:
       - web
     command: ['tunnel', '--no-autoupdate', 'run']
     environment:
-      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?isi CLOUDFLARE_TUNNEL_TOKEN di file .env}
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?set CLOUDFLARE_TUNNEL_TOKEN in the .env file}

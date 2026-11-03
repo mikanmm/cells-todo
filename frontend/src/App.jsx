@@ -5,7 +5,7 @@ import Login from './Login.jsx'
 import TodoApp from './TodoApp.jsx'
 
 export default function App() {
-  // undefined = sedang memeriksa sesi, null = belum masuk
+  // undefined = checking the session; null = signed out
   const [user, setUser] = useState(undefined)
 
   useEffect(() => {
@@ -74,7 +74,7 @@ export default function App() {
       <Backdrop />
       {user === undefined ? (
         <div className="boot" role="status">
-          Memuat…
+          Loading…
         </div>
       ) : user === null ? (
         <Login onLogin={setUser} />

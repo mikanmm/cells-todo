@@ -1,69 +1,69 @@
 # Cells
 
-**Daftar tugas pribadi dengan pengingat lewat email dan Discord.**
+**A personal task manager with email and Discord reminders.**
 
-Cells membantu Anda mencatat pekerjaan, menentukan mana yang perlu didahulukan, dan memantau tugas yang sudah selesai. Tugas ditampilkan berdasarkan prioritas agar pekerjaan penting lebih mudah ditemukan.
+Cells helps you organize your work, identify priorities, and track completed tasks. Tasks are grouped by priority so you can quickly find the work that requires your attention.
 
-Cocok untuk mengelola pekerjaan harian, tugas kuliah, atau rencana pribadi. Anda dapat menjalankan Cells di komputer atau server sendiri, lalu mengaksesnya melalui browser.
+Use Cells to manage daily work, coursework, or personal plans. Host it on your own computer or server and access it through a browser.
 
-## Apa yang bisa dilakukan?
+## Features
 
-### Mengatur tugas harian
+### Organize daily tasks
 
-Buat tugas dengan judul, catatan, kategori, prioritas, dan tanggal jatuh tempo. Ubah detailnya saat rencana berubah, tandai selesai setelah dikerjakan, atau hapus tugas yang tidak diperlukan.
+Create tasks with a title, notes, category, priority, and due date. Update the details as your plans change, mark tasks as completed, or delete tasks you no longer need.
 
-### Menentukan fokus
+### Focus on priorities
 
-Tugas dikelompokkan menjadi prioritas tinggi, sedang, dan rendah. Pencarian dan filter kategori membantu menemukan pekerjaan tertentu, sementara penanda keterlambatan dan progres penyelesaian membantu memantau pekerjaan yang masih tersisa.
+Tasks are grouped into high, medium, and low priorities. Search and category filters help you locate specific items, while overdue indicators and completion progress show what remains to be done.
 
-### Mendapat pengingat
+### Receive reminders
 
-Kirim ringkasan tugas aktif melalui email atau ke channel Discord menggunakan webhook. Pengiriman dapat dilakukan langsung atau dijadwalkan setiap hari pada jam pilihan Anda dalam zona WIB.
+Send summaries of active tasks by email or to a Discord channel through a webhook. Send messages immediately or schedule daily delivery at a selected time in the Asia/Jakarta time zone (WIB, UTC+7).
 
-Email mendukung beberapa penerima, teks biasa, dan HTML. Pesan Discord mendukung teks dan Markdown. Masing-masing memiliki pengaturan pesan serta jadwal sendiri.
+Email supports multiple recipients, plain text, and HTML. Discord messages support text and Markdown. Each channel has its own message and schedule settings.
 
-### Menyesuaikan pesan
+### Customize messages
 
-Gunakan pesan biasa atau template yang mengambil informasi dari tugas, seperti nama pengguna, jumlah tugas aktif, dan daftar tugas berdasarkan prioritas. Tersedia pratinjau dan pengiriman tes untuk memeriksa pesan sebelum digunakan. Untuk email, tersedia juga template tabel bawaan.
+Use plain messages or templates that include task information, such as your name, the number of active tasks, and task lists grouped by priority. Preview messages and send tests before enabling scheduled delivery. A default HTML table template is available for email.
 
-### Memisahkan data setiap akun
+### Keep accounts separate
 
-Setiap akun memiliki tugas, kategori, dan pengaturan notifikasinya sendiri. Satu instalasi dapat digunakan oleh beberapa akun dengan daftar tugas masing-masing.
+Each account has its own tasks, categories, and notification settings. Multiple accounts can use the same installation with separate task lists.
 
-Sesi login berlaku maksimal 6 jam sejak masuk. Setelah itu, pengguna perlu login kembali; aktivitas dan refresh halaman tidak memperpanjang sesi.
+Sign-in sessions expire after six hours. Users must then sign in again; activity and page refreshes do not extend the session.
 
-## Contoh penggunaan
+## Example workflow
 
-Mulai hari dengan mencatat pekerjaan dan memberi prioritas pada tugas yang paling penting. Tambahkan kategori seperti **Kuliah**, **Kerja**, atau **Pribadi**, lalu tentukan tanggal jatuh temponya. Setelah selesai, tandai tugas tersebut untuk memperbarui progres.
+Start your day by adding tasks and assigning priorities. Organize them into categories such as **Study**, **Work**, or **Personal**, and set due dates. Mark tasks as completed to update your progress.
 
-Jika ingin pengingat rutin, buka **Setting → Notify**, pilih email atau Discord, lalu simpan pesan dan jadwal pengiriman. Misalnya, kirim ringkasan tugas aktif setiap pukul **08:00 WIB**. Server harus tetap berjalan agar pengingat terjadwal dapat dikirim.
+For regular reminders, open **Settings → Notifications**, choose email or Discord, and save your message and delivery schedule. For example, send a summary of active tasks every day at **08:00 WIB**. The server must remain running for scheduled delivery.
 
-## Menjalankan sendiri
+## Run your own instance
 
-Cells menggunakan React, Go, dan PostgreSQL. Cara menjalankan yang disediakan adalah melalui Docker Compose.
+Cells uses React, Go, and PostgreSQL. Docker Compose is the supported deployment method.
 
-1. Siapkan Docker dan Docker Compose; di Windows, jalankan Docker Desktop.
-2. Salin `.env.example` menjadi `.env`, lalu isi `DB_PASSWORD`.
-3. Jalankan perintah berikut dari folder proyek:
+1. Install Docker and Docker Compose. On Windows, start Docker Desktop.
+2. Copy `.env.example` to `.env` and set `DB_PASSWORD`.
+3. Run the following command from the project directory:
 
 ```bash
 docker compose up -d --build
 ```
 
-Buka [http://localhost:8080](http://localhost:8080). Akun awal menggunakan username **admin** dan password **admin**. Ganti password dengan pilihan Anda, minimal 8 karakter:
+Open [http://localhost:8080](http://localhost:8080). The initial account uses **admin** as both the username and password. Replace the default password with your own password containing at least eight characters:
 
 ```bash
-docker compose exec backend /app/server passwd admin "passwordBaruAnda"
+docker compose exec backend /app/server passwd admin "yourNewPassword"
 ```
 
-Untuk email, isi konfigurasi SMTP pada `.env`, lalu jalankan `docker compose up -d backend`. Atur penerima di menu Notify dengan pemisah `;`, misalnya `123@gmail.com; 234@gmail.com`. Untuk Discord, simpan URL webhook melalui panel Discord di menu yang sama.
+For email, enter your SMTP configuration in `.env`, then run `docker compose up -d backend`. In Notifications, separate recipient addresses with semicolons, for example `first@example.com; second@example.com`. For Discord, save your webhook URL in the Discord notifications panel.
 
-### Akses melalui Cloudflare Tunnel
+### Access through Cloudflare Tunnel
 
-Branch `cloudflare` menyediakan Compose tambahan untuk akses melalui `todo.mikanm.me`. Isi `CLOUDFLARE_TUNNEL_TOKEN` di `.env` dan arahkan rute hostname tersebut ke service `http://web:80` pada dashboard Cloudflare, lalu jalankan:
+The `cloudflare` branch includes an additional Compose file for access through `todo.mikanm.me`. Set `CLOUDFLARE_TUNNEL_TOKEN` in `.env` and route that hostname to `http://web:80` in the Cloudflare dashboard. Then run:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.cloudflare.yml up -d --build
 ```
 
-Data aplikasi disimpan di volume PostgreSQL. File `.env` berisi konfigurasi pribadi dan tidak ikut disimpan di Git.
+Application data is stored in the PostgreSQL volume. The `.env` file contains private configuration and is excluded from Git.

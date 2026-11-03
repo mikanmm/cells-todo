@@ -80,12 +80,12 @@ export default function TodoApp({ user, onLogout, onSessionExpired }) {
       <header className="topbar">
         <div className="topbar-text">
           <div className="greeting-row">
-            <h1 className="greeting">Halo, {user.displayName}</h1>
+            <h1 className="greeting">Hello, {user.displayName}</h1>
             <div className="settings-menu" ref={menuRef}>
               <button
                 type="button"
                 className="account-chevron"
-                aria-label="Buka menu"
+                aria-label="Open menu"
                 aria-expanded={menuOpen}
                 aria-controls="account-menu"
                 onClick={() => setMenuOpen(!menuOpen)}
@@ -104,9 +104,9 @@ export default function TodoApp({ user, onLogout, onSessionExpired }) {
                 </svg>
               </button>
               {menuOpen && (
-                <nav id="account-menu" className="card settings-links" aria-label="Menu akun">
+                <nav id="account-menu" className="card settings-links" aria-label="Account menu">
                   <a href="/setting" onClick={() => setMenuOpen(false)}>
-                    Setting
+                    Settings
                   </a>
                 </nav>
               )}
@@ -119,35 +119,35 @@ export default function TodoApp({ user, onLogout, onSessionExpired }) {
           className="btn btn-ghost"
           onClick={settings ? () => window.location.assign('/dashboard') : onLogout}
         >
-          {settings ? 'Home' : 'Keluar'}
+          {settings ? 'Home' : 'Sign out'}
         </button>
       </header>
       <aside className="side">
         {!settings && (
-          <section className="card progress-card" aria-label="Progres">
+          <section className="card progress-card" aria-label="Progress">
             <ProgressGem done={todos.filter((t) => t.done).length} total={todos.length} />
             <p className="progress-text">
               {todos.length ? (
                 <>
-                  <strong>{todos.filter((t) => t.done).length}</strong> dari{' '}
-                  <strong>{todos.length}</strong> tugas selesai
+                  <strong>{todos.filter((t) => t.done).length}</strong> of{' '}
+                  <strong>{todos.length}</strong> tasks completed
                 </>
               ) : (
-                'Belum ada tugas'
+                'No tasks yet'
               )}
             </p>
             {todos.some((t) => !t.done && t.dueDate && dayDiff(t.dueDate) < 0) && (
               <p className="overdue-note">
-                {todos.filter((t) => !t.done && t.dueDate && dayDiff(t.dueDate) < 0).length} tugas
-                terlambat
+                {todos.filter((t) => !t.done && t.dueDate && dayDiff(t.dueDate) < 0).length} overdue
+                tasks
               </p>
             )}
           </section>
         )}
-        <nav className="card filter-card" aria-label="Filter tugas">
+        <nav className="card filter-card" aria-label="Task filters">
           {settings ? (
             <>
-              <h2 className="side-heading settings-nav-title">Setting</h2>
+              <h2 className="side-heading settings-nav-title">Settings</h2>
               <ul className="filter-list">
                 <li>
                   <a
@@ -155,7 +155,7 @@ export default function TodoApp({ user, onLogout, onSessionExpired }) {
                     href="/setting"
                     aria-current={!notify ? 'page' : undefined}
                   >
-                    List kategori
+                    Categories
                   </a>
                 </li>
                 <li>
@@ -164,14 +164,14 @@ export default function TodoApp({ user, onLogout, onSessionExpired }) {
                     href="/setting/notify"
                     aria-current={notify ? 'page' : undefined}
                   >
-                    Notify
+                    Notifications
                   </a>
                 </li>
               </ul>
             </>
           ) : (
             <>
-              {/*<div className="priority-order"><span>Urutan prioritas</span><strong>Tinggi → Sedang → Rendah</strong></div>*/}
+              {/*<div className="priority-order"><span>Priority order</span><strong>High → Medium → Low</strong></div>*/}
               <ul className="filter-list">
                 {['all', 'active', 'done'].map((v) => (
                   <li key={v}>
@@ -181,7 +181,9 @@ export default function TodoApp({ user, onLogout, onSessionExpired }) {
                       aria-pressed={filter === v}
                       onClick={() => setFilter(v)}
                     >
-                      <span>{{ all: 'Semua', active: 'Belum selesai', done: 'Selesai' }[v]}</span>
+                      <span>
+                        {{ all: 'All tasks', active: 'Incomplete', done: 'Completed' }[v]}
+                      </span>
                       <span className="count">
                         {todos.filter((t) => (v === 'done' ? t.done : !t.done)).length}
                       </span>
@@ -191,7 +193,7 @@ export default function TodoApp({ user, onLogout, onSessionExpired }) {
               </ul>
               {categories.length > 0 && (
                 <div className="cat-block">
-                  <h2 className="side-heading">Kategori</h2>
+                  <h2 className="side-heading">Categories</h2>
                   <div className="cat-list">
                     {categories.map((c) => (
                       <button
@@ -228,7 +230,7 @@ export default function TodoApp({ user, onLogout, onSessionExpired }) {
             <TodoForm
               composer
               categories={categories}
-              submitLabel="Tambah"
+              submitLabel="Add"
               onSubmit={async (v) => {
                 await api.createTodo(v)
                 await load()
@@ -236,8 +238,8 @@ export default function TodoApp({ user, onLogout, onSessionExpired }) {
             />
             <div className="search">
               <input
-                aria-label="Cari tugas"
-                placeholder="Cari tugas..."
+                aria-label="Search tasks"
+                placeholder="Search tasks..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
@@ -248,7 +250,7 @@ export default function TodoApp({ user, onLogout, onSessionExpired }) {
                   id={`priority-${group.key}`}
                   className={`priority-banner priority-banner-${group.key}`}
                 >
-                  Prioritas: {group.label}
+                  Priority: {group.label}
                   <span className="group-count">{group.items.length}</span>
                 </h2>
                 <ul className="task-list">
@@ -258,7 +260,7 @@ export default function TodoApp({ user, onLogout, onSessionExpired }) {
                         <TodoForm
                           initial={{ ...t, dueDate: t.dueDate ?? '' }}
                           categories={categories}
-                          submitLabel="Simpan perubahan"
+                          submitLabel="Save changes"
                           onCancel={() => setEditing(null)}
                           onSubmit={async (v) => {
                             await api.updateTodo(t.id, v)
@@ -287,8 +289,8 @@ export default function TodoApp({ user, onLogout, onSessionExpired }) {
                 </ul>
               </section>
             ))}
-            {!todos.length && <p>Belum ada tugas.</p>}
-            {todos.length > 0 && groups.length === 0 && <p>Tidak ada tugas yang cocok.</p>}
+            {!todos.length && <p>No tasks yet.</p>}
+            {todos.length > 0 && groups.length === 0 && <p>No matching tasks.</p>}
           </>
         )}
       </main>

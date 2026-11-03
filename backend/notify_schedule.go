@@ -25,25 +25,25 @@ type notifySchedule struct {
 }
 
 func defaultSchedule() notifySchedule {
-	return notifySchedule{Hour: "08:00", Mode: "template", Format: "html", Subject: "Notify reminder tugas — {{.Total}} tugas aktif", Body: defaultNotifyTable}
+	return notifySchedule{Hour: "08:00", Mode: "template", Format: "html", Subject: "Task reminder — {{.Total}} active tasks", Body: defaultNotifyTable}
 }
 
 const defaultNotifyTable = `<div style="font-family:Arial,sans-serif;color:#253746;font-size:14px;line-height:1.6">
-<h2 style="font-size:20px;font-weight:600;margin:0 0 8px">Pengingat tugas</h2>
-<p style="margin:0 0 20px;color:#64748b">Halo {{.Name}}, berikut ringkasan tugas aktif pada {{.Date}}.</p>
+<h2 style="font-size:20px;font-weight:600;margin:0 0 8px">Task reminder</h2>
+<p style="margin:0 0 20px;color:#64748b">Hello {{.Name}}, here is your active task summary for {{.Date}}.</p>
 <table border="1" cellpadding="12" cellspacing="0" style="border-collapse:collapse;width:100%;border:1px solid #dce4eb;border-color:#dce4eb;font-size:13px">
-<thead><tr style="background:#eef4f7;text-align:left;color:#365164"><th>Tugas</th><th>Prioritas</th><th>Kategori</th><th>Jatuh tempo</th><th>Status</th></tr></thead>
+<thead><tr style="background:#eef4f7;text-align:left;color:#365164"><th>Task</th><th>Priority</th><th>Category</th><th>Due date</th><th>Status</th></tr></thead>
 <tbody>{{range .Tasks}}
-<tr style="vertical-align:top"><td{{if not .Title}} align="center"{{end}}>{{if .Title}}{{.Title}}{{else}}-{{end}}</td><td{{if not .Priority}} align="center"{{end}}>{{if eq .Priority "high"}}Urgent / tinggi{{else if eq .Priority "medium"}}Sedang{{else if eq .Priority "low"}}Rendah{{else}}-{{end}}</td><td{{if not .Category}} align="center"{{end}}>{{if .Category}}{{.Category}}{{else}}-{{end}}</td><td{{if not .DueDate}} align="center"{{end}}>{{if .DueDate}}{{.DueDate}}{{else}}-{{end}}</td><td>Belum selesai</td></tr>
+<tr style="vertical-align:top"><td{{if not .Title}} align="center"{{end}}>{{if .Title}}{{.Title}}{{else}}-{{end}}</td><td{{if not .Priority}} align="center"{{end}}>{{if eq .Priority "high"}}Urgent / high{{else if eq .Priority "medium"}}Medium{{else if eq .Priority "low"}}Low{{else}}-{{end}}</td><td{{if not .Category}} align="center"{{end}}>{{if .Category}}{{.Category}}{{else}}-{{end}}</td><td{{if not .DueDate}} align="center"{{end}}>{{if .DueDate}}{{.DueDate}}{{else}}-{{end}}</td><td>Incomplete</td></tr>
 {{else}}<tr><td colspan="5" align="center" style="padding:24px;color:#94a3b8">-</td></tr>{{end}}</tbody>
-<tfoot><tr style="background:#f7fafc"><td colspan="5"><strong>Total: {{.Total}} tugas aktif</strong> · Urgent: {{.Urgent}} · Sedang: {{.Medium}} · Rendah: {{.Low}}</td></tr></tfoot>
+<tfoot><tr style="background:#f7fafc"><td colspan="5"><strong>Total: {{.Total}} active tasks</strong> · Urgent: {{.Urgent}} · Medium: {{.Medium}} · Low: {{.Low}}</td></tr></tfoot>
 </table>
-<p style="font-size:12px;color:#94a3b8;margin-top:16px">Diurutkan berdasarkan prioritas dan jatuh tempo. Maksimal 100 tugas ditampilkan; total menghitung seluruh tugas aktif.</p>
+<p style="font-size:12px;color:#94a3b8;margin-top:16px">Sorted by priority and due date. Up to 100 tasks are shown; totals include all active tasks.</p>
 </div>`
 
 func validateNotifyFormat(format string) error {
 	if format != "" && format != "text" && format != "html" {
-		return errors.New("Format pesan harus teks atau HTML.")
+		return errors.New("Message format must be text or HTML.")
 	}
 	return nil
 }
@@ -69,10 +69,10 @@ func (s notifySchedule) validate() error {
 	}
 	t, err := time.Parse("15:04", s.Hour)
 	if err != nil || t.Minute() != 0 || t.Format("15:04") != s.Hour {
-		return errors.New("Pilih jam 00:00 sampai 23:00.")
+		return errors.New("Select an hourly time from 00:00 to 23:00.")
 	}
 	if s.Mode != "text" && s.Mode != "template" {
-		return errors.New("Pilih mode teks atau template custom.")
+		return errors.New("Select plain text or custom template mode.")
 	}
 	return validateEmailContent(s.Subject, s.Body)
 }
@@ -96,7 +96,7 @@ type templateOutput struct{ bytes.Buffer }
 
 func (b *templateOutput) Write(p []byte) (int, error) {
 	if b.Len()+len(p) > 100000 {
-		return 0, errors.New("Hasil template terlalu panjang (maksimal 100.000 byte).")
+		return 0, errors.New("Template output is too long (maximum 100,000 bytes).")
 	}
 	return b.Buffer.Write(p)
 }
@@ -104,27 +104,27 @@ func renderNotifyTemplate(source string, data notifyTemplateData, formats ...str
 	if len(formats) > 0 && formats[0] == "html" {
 		t, err := htmltemplate.New("notify").Option("missingkey=error").Parse(source)
 		if err != nil {
-			return "", fmt.Errorf("Template HTML tidak valid: %w", err)
+			return "", fmt.Errorf("Invalid HTML template: %w", err)
 		}
 		if err = validateTemplateTree(t.Tree.Root, 0); err != nil {
 			return "", err
 		}
 		var out templateOutput
 		if err = t.Execute(&out, data); err != nil {
-			return "", fmt.Errorf("Template HTML gagal: %w", err)
+			return "", fmt.Errorf("HTML template rendering failed: %w", err)
 		}
 		return out.String(), nil
 	}
 	t, err := template.New("notify").Option("missingkey=error").Parse(source)
 	if err != nil {
-		return "", fmt.Errorf("Template tidak valid: %w", err)
+		return "", fmt.Errorf("Invalid template: %w", err)
 	}
 	if err = validateTemplateTree(t.Tree.Root, 0); err != nil {
 		return "", err
 	}
 	var out templateOutput
 	if err = t.Execute(&out, data); err != nil {
-		return "", fmt.Errorf("Template gagal: %w", err)
+		return "", fmt.Errorf("Template rendering failed: %w", err)
 	}
 	return out.String(), nil
 }
@@ -144,7 +144,7 @@ func validateTemplateTree(node parse.Node, depth int) error {
 		}
 	case *parse.RangeNode:
 		if depth > 0 {
-			return errors.New("Range bertingkat tidak didukung. Gunakan daftar prioritas secara terpisah.")
+			return errors.New("Nested range loops are not supported. Use separate priority lists.")
 		}
 		if err := validateTemplateTree(n.List, depth+1); err != nil {
 			return err
@@ -161,18 +161,18 @@ func validateTemplateTree(node parse.Node, depth int) error {
 		}
 		return validateTemplateTree(n.ElseList, depth)
 	case *parse.TemplateNode:
-		return errors.New("Pemanggilan template rekursif tidak didukung.")
+		return errors.New("Recursive template calls are not supported.")
 	}
 	return nil
 }
 func (a *App) renderNotify(userID int64, subject, body string, formats ...string) (string, string, error) {
 	data := notifyTemplateData{Date: time.Now().In(jakarta()).Format("02 January 2006")}
 	if err := a.db.QueryRow(`SELECT display_name FROM users WHERE id=$1`, userID).Scan(&data.Name); err != nil {
-		return "", "", errors.New("Gagal membaca pemilik tugas.")
+		return "", "", errors.New("Unable to retrieve the task owner.")
 	}
 	rows, err := a.db.Query(`SELECT `+todoCols+` FROM todos WHERE user_id=$1 AND done=FALSE ORDER BY CASE priority WHEN 'high' THEN 0 WHEN 'medium' THEN 1 ELSE 2 END, due_date NULLS LAST, id`, userID)
 	if err != nil {
-		return "", "", errors.New("Gagal membaca tugas.")
+		return "", "", errors.New("Unable to retrieve tasks.")
 	}
 	defer rows.Close()
 	for rows.Next() {
@@ -264,7 +264,7 @@ func (a *App) handleSaveSchedule(w http.ResponseWriter, r *http.Request, u User)
 			return
 		}
 		if len(recipients) == 0 {
-			writeError(w, 400, "Simpan penerima sebelum mengaktifkan jadwal.")
+			writeError(w, 400, "Save recipients before enabling the schedule.")
 			return
 		}
 		next = nextNotifyRun(s.Hour, time.Now())
@@ -291,7 +291,7 @@ func (a *App) handlePreviewNotify(w http.ResponseWriter, r *http.Request, u User
 	if s.Mode == "template" {
 		subject, body, err = a.renderNotify(u.ID, subject, body, s.Format)
 	} else if s.Mode != "text" {
-		err = errors.New("Mode tidak valid.")
+		err = errors.New("Invalid mode.")
 	}
 	if err == nil {
 		err = validateEmailContent(subject, body, s.Format)
@@ -340,14 +340,14 @@ func (a *App) processNotifySchedule() {
 		return
 	}
 	next := nextNotifyRun(s.Hour, time.Now())
-	_, err = tx.ExecContext(ctx, `UPDATE notify_schedule SET next_run=$2,last_run=CURRENT_TIMESTAMP,last_status='Sedang dikirim; jika server terhenti, periksa inbox sebelum mengirim ulang.' WHERE user_id=$1`, id, next)
+	_, err = tx.ExecContext(ctx, `UPDATE notify_schedule SET next_run=$2,last_run=CURRENT_TIMESTAMP,last_status='Sending; if the server stops, check the inbox before sending again.' WHERE user_id=$1`, id, next)
 	if err != nil {
 		return
 	}
 	if tx.Commit() != nil {
 		return
 	}
-	status := "Diterima SMTP Hostinger untuk diteruskan."
+	status := "Accepted by the SMTP server for delivery."
 	recipients, err := a.notifyRecipients(User{ID: id})
 	subject, body := s.Subject, s.Body
 	if err == nil && s.Mode == "template" {
@@ -357,9 +357,9 @@ func (a *App) processNotifySchedule() {
 		err = a.mail.send(ctx, recipients, subject, body, s.Format)
 	}
 	if err != nil {
-		status = "Gagal mengirim. Periksa konfigurasi SMTP, penerima, dan template."
+		status = "Delivery failed. Check the SMTP configuration, recipients, and template."
 		if errors.Is(err, errDeliveryUnknown) {
-			status = "Status belum pasti. Periksa inbox/log Hostinger sebelum mengirim ulang."
+			status = "Delivery status is uncertain. Check the inbox and mail server logs before sending again."
 		}
 	}
 	a.db.Exec(`UPDATE notify_schedule SET last_status=$2 WHERE user_id=$1`, id, status)

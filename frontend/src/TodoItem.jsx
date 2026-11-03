@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { dayDiff, dueLabel } from './dates.js'
 import { GemCheck } from './Gem.jsx'
 
-const PRIORITY_LABEL = { low: 'Rendah', medium: 'Sedang', high: 'Tinggi' }
+const PRIORITY_LABEL = { low: 'Low', medium: 'Medium', high: 'High' }
 
 export default function TodoItem({ todo, onToggle, onEdit, onDelete }) {
   const [confirming, setConfirming] = useState(false)
@@ -15,7 +15,7 @@ export default function TodoItem({ todo, onToggle, onEdit, onDelete }) {
       <GemCheck
         priority={todo.priority}
         done={todo.done}
-        label={`${todo.title} (prioritas ${PRIORITY_LABEL[todo.priority].toLowerCase()})`}
+        label={`${todo.title} (priority ${PRIORITY_LABEL[todo.priority].toLowerCase()})`}
         onToggle={() => onToggle(todo)}
       />
 
@@ -24,11 +24,11 @@ export default function TodoItem({ todo, onToggle, onEdit, onDelete }) {
         {todo.notes && <p className="task-notes">{todo.notes}</p>}
         <p className="task-meta">
           <span className={`prio prio-${todo.priority}`}>
-            Prioritas {PRIORITY_LABEL[todo.priority].toLowerCase()}
+            Priority: {PRIORITY_LABEL[todo.priority]}
           </span>
           {todo.dueDate && (
             <span className={`due ${overdue ? 'is-overdue' : ''}`}>
-              <span className="visually-hidden">Tenggat: </span>
+              <span className="visually-hidden">Due date: </span>
               {dueLabel(todo.dueDate)}
             </span>
           )}
@@ -39,24 +39,24 @@ export default function TodoItem({ todo, onToggle, onEdit, onDelete }) {
       <div className="task-actions">
         {confirming ? (
           <>
-            <span className="confirm-text">Hapus tugas ini?</span>
+            <span className="confirm-text">Delete this task?</span>
             <button type="button" className="link-btn danger" onClick={() => onDelete(todo)}>
-              Hapus
+              Delete
             </button>
             <button type="button" className="link-btn" onClick={() => setConfirming(false)}>
-              Batal
+              Cancel
             </button>
           </>
         ) : (
           <>
             <button type="button" className="btn btn-ghost" onClick={() => onToggle(todo)}>
-              {todo.done ? 'Batalkan selesai' : 'Tandai selesai'}
+              {todo.done ? 'Mark as incomplete' : 'Mark as completed'}
             </button>
             <button type="button" className="link-btn" onClick={() => onEdit(todo)}>
-              Ubah
+              Edit
             </button>
             <button type="button" className="link-btn danger" onClick={() => setConfirming(true)}>
-              Hapus
+              Delete
             </button>
           </>
         )}

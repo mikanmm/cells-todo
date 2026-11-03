@@ -44,7 +44,7 @@ func TestEmailValidationAndEncoding(t *testing.T) {
 		t.Fatal("accepted invalid body")
 	}
 	c := mailConfig{Username: "sender@example.com", FromName: "Cells"}
-	subject, body := "Pengingat 日本語 🌱", "Halo!\nBaris kedua.\n.Titik"
+	subject, body := "Pengingat 日本語 🌱", "Hello!\nBaris kedua.\n.Titik"
 	raw, err := emailMessage(c, subject, body)
 	if err != nil {
 		t.Fatal(err)
@@ -100,7 +100,7 @@ func TestMailDefaultsHaveNoPersonalAddresses(t *testing.T) {
 }
 
 func TestHTMLMailContentType(t *testing.T) {
-	raw, err := emailMessage(mailConfig{Username: "sender@example.com", FromName: "Cells"}, "Reminder", "<table><tr><td>Tugas</td></tr></table>", "html")
+	raw, err := emailMessage(mailConfig{Username: "sender@example.com", FromName: "Cells"}, "Reminder", "<table><tr><td>Task</td></tr></table>", "html")
 	if err != nil {
 		t.Fatal(err)
 	}

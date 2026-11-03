@@ -17,28 +17,28 @@ import (
 var usernameRe = regexp.MustCompile(`^[A-Za-z0-9_.-]{3,64}$`)
 
 func die(format string, a ...any) {
-	fmt.Fprintf(os.Stderr, "Gagal: "+format+"\n", a...)
+	fmt.Fprintf(os.Stderr, "Error: "+format+"\n", a...)
 	os.Exit(1)
 }
 
-// readPassword mengembalikan password dari argumen, atau dari stdin jika argumennya "-".
+// readPassword reads the password argument, or stdin when the argument is "-".
 func readPassword(arg string) string {
 	if arg != "-" {
 		return arg
 	}
 	line, err := bufio.NewReader(os.Stdin).ReadString('\n')
 	if err != nil && line == "" {
-		die("tidak ada password di stdin")
+		die("no password provided on stdin")
 	}
 	return strings.TrimRight(line, "\r\n")
 }
 
 func checkPassword(p string) {
 	if utf8.RuneCountInString(p) < 8 {
-		die("password minimal 8 karakter")
+		die("passwords must contain at least 8 characters")
 	}
 	if len(p) > 72 {
-		die("password maksimal 72 byte (batas bcrypt)")
+		die("passwords must not exceed 72 bytes (bcrypt limit)")
 	}
 }
 
@@ -48,7 +48,7 @@ func openMigrated() *sql.DB {
 		die("%v", err)
 	}
 	if err := migrate(db); err != nil {
-		die("migrasi: %v", err)
+		die("migration: %v", err)
 	}
 	return db
 }
@@ -74,7 +74,7 @@ func runAddUser(args []string) {
 	}
 	username := strings.TrimSpace(args[0])
 	if !usernameRe.MatchString(username) {
-		die("username harus 3-64 karakter: huruf, angka, titik, garis bawah, atau strip")
+		die("usernames must contain 3–64 characters: letters, digits, periods, underscores, or hyphens")
 	}
 	password := readPassword(args[1])
 	checkPassword(password)
@@ -84,7 +84,7 @@ func runAddUser(args []string) {
 		display = strings.TrimSpace(strings.Join(args[2:], " "))
 	}
 	if display == "" || utf8.RuneCountInString(display) > 100 {
-		die("nama tampilan harus 1-100 karakter")
+		die("display names must contain 1–100 characters")
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcryptCost)
@@ -101,12 +101,12 @@ func runAddUser(args []string) {
 	)
 	var me *pq.Error
 	if errors.As(err, &me) && me.Code == "23505" {
-		die("username %q sudah dipakai", username)
+		die("username %q is already in use", username)
 	}
 	if err != nil {
 		die("%v", err)
 	}
-	fmt.Printf("Akun %q berhasil dibuat.\n", username)
+	fmt.Printf("Account %q created successfully.\n", username)
 }
 
 func runPasswd(args []string) {
@@ -131,9 +131,9 @@ func runPasswd(args []string) {
 		die("%v", err)
 	}
 	if n, _ := res.RowsAffected(); n == 0 {
-		die("akun %q tidak ditemukan", username)
+		die("account %q not found", username)
 	}
-	// Semua sesi lama dicabut agar perangkat lain harus masuk ulang.
+	// Revoke existing sessions so other devices must sign in again.
 	_, _ = db.Exec(`DELETE FROM sessions WHERE user_id = (SELECT id FROM users WHERE username = $1)`, username)
-	fmt.Printf("Password akun %q diganti. Semua sesi lama dicabut.\n", username)
+	fmt.Printf("Password for account %q changed. All previous sessions have been revoked.\n", username)
 }

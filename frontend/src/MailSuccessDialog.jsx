@@ -23,13 +23,13 @@ export default function MailSuccessDialog({ result, onClose }) {
         <span className="mail-success-icon" aria-hidden="true">
           ✓
         </span>
-        <h2 id="mail-success-title">Email berhasil dikirim</h2>
+        <h2 id="mail-success-title">Email submitted successfully</h2>
         <p id="mail-success-description">
-          Server SMTP Hostinger menerima email untuk diteruskan ke {result.accepted} penerima.
+          The SMTP server has accepted the email for delivery to {result.accepted} recipients.
         </p>
-        <p className="muted">Silakan periksa inbox atau folder spam penerima.</p>
+        <p className="muted">Please check the recipient inbox or spam folder.</p>
         <button type="button" className="btn btn-primary" autoFocus onClick={onClose}>
-          Oke
+          OK
         </button>
       </div>
     </dialog>,

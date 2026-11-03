@@ -2,14 +2,14 @@ import { useId, useRef, useState } from 'react'
 import { GemDot } from './Gem.jsx'
 
 export const PRIORITIES = [
-  { value: 'low', label: 'Rendah' },
-  { value: 'medium', label: 'Sedang' },
-  { value: 'high', label: 'Tinggi' },
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'high', label: 'High' },
 ]
 
 const EMPTY = { title: '', notes: '', priority: 'medium', category: '', dueDate: '' }
 
-// composer = true: kolom tambah cepat di atas daftar. false: form ubah di dalam kartu tugas.
+// composer = true: quick-entry form above the list; false: edit form inside a task card.
 export default function TodoForm({
   initial,
   categories = [],
@@ -29,7 +29,7 @@ export default function TodoForm({
     const value = e.target.value
     setValues((v) => ({ ...v, [key]: value }))
     if (key === 'title' && value.trim()) {
-      setError((current) => (current === 'Tulis judul tugas dulu.' ? '' : current))
+      setError((current) => (current === 'Please enter a task title.' ? '' : current))
     }
   }
 
@@ -37,7 +37,7 @@ export default function TodoForm({
     e.preventDefault()
     if (busy) return
     if (!values.title.trim()) {
-      setError('Tulis judul tugas dulu.')
+      setError('Please enter a task title.')
       titleRef.current?.focus()
       return
     }
@@ -86,8 +86,8 @@ export default function TodoForm({
           ref={titleRef}
           className="title-input"
           type="text"
-          placeholder={composer ? 'Tulis tugas baru…' : 'Judul tugas'}
-          aria-label="Judul tugas"
+          placeholder={composer ? 'Enter a new task…' : 'Task title'}
+          aria-label="Task title"
           maxLength={200}
           value={values.title}
           onChange={set('title')}
@@ -96,7 +96,7 @@ export default function TodoForm({
         />
         {composer && (
           <button type="submit" className="btn btn-primary" disabled={busy}>
-            {busy ? 'Menyimpan…' : submitLabel}
+            {busy ? 'Saving…' : submitLabel}
           </button>
         )}
       </div>
@@ -104,12 +104,12 @@ export default function TodoForm({
       {open && (
         <div className="form-details">
           <label className="field field-wide">
-            <span>Catatan</span>
+            <span>Notes</span>
             <textarea rows={2} maxLength={2000} value={values.notes} onChange={set('notes')} />
           </label>
 
           <fieldset className="field">
-            <legend>Prioritas</legend>
+            <legend>Priority</legend>
             <div className="segmented">
               {PRIORITIES.map((p) => (
                 <label key={p.value} className={`seg ${values.priority === p.value ? 'on' : ''}`}>
@@ -129,14 +129,14 @@ export default function TodoForm({
           </fieldset>
 
           <label className="field">
-            <span>Tenggat</span>
+            <span>Due date</span>
             <input type="date" value={values.dueDate} onChange={set('dueDate')} />
           </label>
 
           <label className="field">
-            <span>Kategori</span>
+            <span>Category</span>
             <select value={values.category} onChange={set('category')}>
-              <option value="">Tanpa kategori</option>
+              <option value="">Uncategorized</option>
               {categories.map((c) => (
                 <option key={c} value={c}>
                   {c}
@@ -156,10 +156,10 @@ export default function TodoForm({
       {(!composer || open) && (
         <div className="form-actions">
           <button type="submit" className="btn btn-primary" disabled={busy}>
-            {busy ? 'Menyimpan…' : submitLabel}
+            {busy ? 'Saving…' : submitLabel}
           </button>
           <button type="button" className="btn btn-ghost" disabled={busy} onClick={cancel}>
-            Batal
+            Cancel
           </button>
         </div>
       )}

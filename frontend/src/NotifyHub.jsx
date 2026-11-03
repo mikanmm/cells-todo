@@ -6,9 +6,9 @@ export default function NotifyHub({ onSessionExpired }) {
   return (
     <div className="notify-hub">
       <div className="notify-hub-heading">
-        <h2>Notify</h2>
+        <h2>Notifications</h2>
         <p className="muted">
-          Pilih saluran notifikasi untuk mengatur pesan dan jadwal pengiriman.
+          Select a notification channel to configure messages and delivery schedules.
         </p>
       </div>
       <details className="card notify-channel">
@@ -17,8 +17,8 @@ export default function NotifyHub({ onSessionExpired }) {
             ✉
           </span>
           <span>
-            <strong>Notify By Mail</strong>
-            <small>Kirim pengingat ke akun email Anda.</small>
+            <strong>Email notifications</strong>
+            <small>Send reminders to your email recipients.</small>
           </span>
           <span className="notify-channel-chevron">
             <Chevron />
@@ -32,8 +32,8 @@ export default function NotifyHub({ onSessionExpired }) {
             #
           </span>
           <span>
-            <strong>Notify By Discord Webhook</strong>
-            <small>Kirim pengingat ke channel Discord Anda.</small>
+            <strong>Discord notifications</strong>
+            <small>Send reminders to your Discord channel.</small>
           </span>
           <span className="notify-channel-chevron">
             <Chevron />

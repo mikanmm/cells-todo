@@ -68,7 +68,7 @@ func (a *App) handleSaveNotifySettings(w http.ResponseWriter, r *http.Request, u
 }
 
 func (a *App) handleTestEmail(w http.ResponseWriter, r *http.Request, u User) {
-	a.sendNotification(w, r, u, "Tes notifikasi Cells", "Halo!\n\nIni adalah email tes dari Cells melalui SMTP Hostinger.\nJika email ini diterima, pengiriman email Notify berhasil.")
+	a.sendNotification(w, r, u, "Cells notification test", "Hello!\n\nThis is a test email from Cells sent through your configured SMTP server.\nReceiving this email confirms that notification delivery is working.")
 }
 
 func (a *App) handleBroadcastEmail(w http.ResponseWriter, r *http.Request, u User) {
@@ -94,7 +94,7 @@ func (a *App) handleBroadcastEmail(w http.ResponseWriter, r *http.Request, u Use
 			return
 		}
 	} else if in.Mode != "" && in.Mode != "text" {
-		writeError(w, 400, "Mode pesan tidak valid.")
+		writeError(w, 400, "Invalid message mode.")
 		return
 	}
 	if err := validateEmailContent(in.Subject, in.Body, in.Format); err != nil {
@@ -115,7 +115,7 @@ func (a *App) sendNotification(w http.ResponseWriter, r *http.Request, u User, s
 		return
 	}
 	if len(recipients) == 0 {
-		writeError(w, http.StatusBadRequest, "Simpan minimal satu alamat penerima terlebih dahulu.")
+		writeError(w, http.StatusBadRequest, "Save at least one recipient email address first.")
 		return
 	}
 	// Atomic, shared across users/replicas and retained across server restarts.
@@ -132,18 +132,18 @@ func (a *App) sendNotification(w http.ResponseWriter, r *http.Request, u User, s
 	}
 	if n == 0 {
 		w.Header().Set("Retry-After", "60")
-		writeError(w, http.StatusTooManyRequests, "Tunggu satu menit sejak pengiriman terakhir sebelum mengirim lagi.")
+		writeError(w, http.StatusTooManyRequests, "Wait at least one minute after the previous delivery before sending again.")
 		return
 	}
 	if err := a.mail.send(r.Context(), recipients, subject, body, formats...); err != nil {
 		if errors.Is(err, errDeliveryUnknown) {
-			writeError(w, http.StatusBadGateway, "Status pengiriman belum dapat dipastikan. Periksa inbox dan log pengiriman Hostinger sebelum mencoba lagi agar email tidak terkirim dua kali.")
+			writeError(w, http.StatusBadGateway, "Delivery status is uncertain. Check the inbox and mail server logs before trying again to avoid duplicate emails.")
 		} else {
 			// SMTP errors may contain mailbox or authentication details. Keep them
 			// out of responses and logs; configuration errors above are actionable.
-			writeError(w, http.StatusBadGateway, "Email belum dikirim. Periksa kredensial SMTP, alamat penerima, batas pengiriman Hostinger, dan koneksi server ke port SMTP.")
+			writeError(w, http.StatusBadGateway, "The email has not been sent. Check SMTP credentials, recipient addresses, provider delivery limits, and the server connection to the SMTP port.")
 		}
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"accepted": len(recipients), "message": "Email diterima server SMTP Hostinger untuk diteruskan. Periksa inbox atau folder spam penerima."})
+	writeJSON(w, http.StatusOK, map[string]any{"accepted": len(recipients), "message": "The SMTP server has accepted the email for delivery. Check the recipient inbox or spam folder."})
 }

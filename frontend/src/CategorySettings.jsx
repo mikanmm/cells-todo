@@ -19,7 +19,7 @@ export default function CategorySettings({ categories, onChange, onSessionExpire
     setError('')
     setNotice('')
     if (!trimmed) {
-      setError('Isi nama kategori terlebih dahulu.')
+      setError('Please enter a category name.')
       return
     }
     setBusy(true)
@@ -27,7 +27,7 @@ export default function CategorySettings({ categories, onChange, onSessionExpire
       await api.addCategory(trimmed)
       setName('')
       await onChange()
-      setNotice('Kategori berhasil ditambahkan.')
+      setNotice('Category added successfully.')
     } catch (err) {
       fail(err)
     } finally {
@@ -43,7 +43,7 @@ export default function CategorySettings({ categories, onChange, onSessionExpire
     try {
       await api.deleteCategory(category)
       await onChange()
-      setNotice('Kategori berhasil dihapus.')
+      setNotice('Category deleted successfully.')
     } catch (err) {
       fail(err)
     } finally {
@@ -53,21 +53,21 @@ export default function CategorySettings({ categories, onChange, onSessionExpire
 
   return (
     <section className="card settings-panel">
-      <h2>List kategori</h2>
+      <h2>Categories</h2>
       <form className="category-create" onSubmit={add} noValidate>
         <label className="field" htmlFor="category-name">
-          <span>Nama kategori</span>
+          <span>Category name</span>
           <input
             id="category-name"
             value={name}
             maxLength={40}
             disabled={busy}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Cth. kategori: Kerja"
+            placeholder="For example: Work"
           />
         </label>
         <button type="submit" className="btn btn-primary" disabled={busy}>
-          {busy ? 'Menyimpan...' : 'Tambah kategori'}
+          {busy ? 'Saving...' : 'Add category'}
         </button>
       </form>
       {error && (
@@ -90,17 +90,15 @@ export default function CategorySettings({ categories, onChange, onSessionExpire
               disabled={busy}
               onClick={() => remove(category)}
             >
-              Hapus
+              Delete
             </button>
           </li>
         ))}
       </ul>
       {!categories.length && (
-        <p className="muted">Belum ada kategori. Tambahkan kategori pertama di atas.</p>
+        <p className="muted">No categories yet. Add your first category above.</p>
       )}
-      <p className="muted settings-help">
-        Menghapus kategori membuat tugas terkait menjadi tanpa kategori.
-      </p>
+      <p className="muted settings-help">Deleting a category leaves its tasks uncategorized.</p>
     </section>
   )
 }

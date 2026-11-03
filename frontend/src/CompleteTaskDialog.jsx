@@ -41,10 +41,10 @@ export default function CompleteTaskDialog({ todo, onConfirm, onCancel }) {
       }}
     >
       <form onSubmit={confirm}>
-        <h2 id="complete-title">Selesaikan tugas?</h2>
+        <h2 id="complete-title">Complete this task?</h2>
         <p className="complete-task-name">{todo.title}</p>
         <p id="complete-description" className="muted">
-          Tugas akan dipindahkan ke menu Selesai dan tidak muncul lagi di menu Semua.
+          The task will move to Completed and will no longer appear under All tasks.
         </p>
         {error && (
           <p className="form-error" role="alert">
@@ -59,10 +59,10 @@ export default function CompleteTaskDialog({ todo, onConfirm, onCancel }) {
             onClick={onCancel}
             autoFocus
           >
-            Batal
+            Cancel
           </button>
           <button type="submit" className="btn btn-primary" disabled={busy}>
-            {busy ? 'Menyimpan...' : 'Ya, selesaikan'}
+            {busy ? 'Saving...' : 'Yes, complete task'}
           </button>
         </div>
       </form>

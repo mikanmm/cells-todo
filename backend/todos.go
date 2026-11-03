@@ -55,7 +55,7 @@ func scanTodo(row rowScanner) (Todo, error) {
 	return t, nil
 }
 
-// validate merapikan input dan mengembalikan pesan kesalahan (kosong jika valid).
+// validate normalizes input and returns an error message, or an empty string when valid.
 func (in *todoInput) validate() (due any, msg string) {
 	in.Title = strings.TrimSpace(in.Title)
 	in.Notes = strings.TrimSpace(in.Notes)
@@ -64,13 +64,13 @@ func (in *todoInput) validate() (due any, msg string) {
 
 	switch {
 	case in.Title == "":
-		return nil, "Judul tugas wajib diisi."
+		return nil, "A task title is required."
 	case utf8.RuneCountInString(in.Title) > 200:
-		return nil, "Judul tugas maksimal 200 karakter."
+		return nil, "Task titles must not exceed 200 characters."
 	case utf8.RuneCountInString(in.Notes) > 2000:
-		return nil, "Catatan maksimal 2000 karakter."
+		return nil, "Notes must not exceed 2,000 characters."
 	case utf8.RuneCountInString(in.Category) > 40:
-		return nil, "Kategori maksimal 40 karakter."
+		return nil, "Categories must not exceed 40 characters."
 	}
 
 	switch in.Priority {
@@ -78,7 +78,7 @@ func (in *todoInput) validate() (due any, msg string) {
 		in.Priority = "medium"
 	case "low", "medium", "high":
 	default:
-		return nil, "Prioritas tidak dikenal."
+		return nil, "Unknown priority."
 	}
 
 	if in.DueDate == "" {
@@ -86,7 +86,7 @@ func (in *todoInput) validate() (due any, msg string) {
 	}
 	d, err := time.Parse("2006-01-02", in.DueDate)
 	if err != nil {
-		return nil, "Format tanggal tidak valid."
+		return nil, "Invalid date format."
 	}
 	return d, ""
 }
@@ -98,7 +98,7 @@ func pathID(r *http.Request) (int64, bool) {
 
 func serverError(w http.ResponseWriter, where string, err error) {
 	log.Printf("%s: %v", where, err)
-	writeError(w, http.StatusInternalServerError, "Terjadi kesalahan pada server.")
+	writeError(w, http.StatusInternalServerError, "An internal server error occurred.")
 }
 
 func (a *App) handleListTodos(w http.ResponseWriter, r *http.Request, u User) {
@@ -156,7 +156,7 @@ func (a *App) handleCreateTodo(w http.ResponseWriter, r *http.Request, u User) {
 func (a *App) handleUpdateTodo(w http.ResponseWriter, r *http.Request, u User) {
 	id, ok := pathID(r)
 	if !ok {
-		writeError(w, http.StatusNotFound, "Tugas tidak ditemukan.")
+		writeError(w, http.StatusNotFound, "Task not found.")
 		return
 	}
 	var in todoInput
@@ -178,7 +178,7 @@ func (a *App) handleUpdateTodo(w http.ResponseWriter, r *http.Request, u User) {
 		return
 	}
 	if n, _ := res.RowsAffected(); n == 0 {
-		writeError(w, http.StatusNotFound, "Tugas tidak ditemukan.")
+		writeError(w, http.StatusNotFound, "Task not found.")
 		return
 	}
 	t, err := scanTodo(a.db.QueryRow(`SELECT `+todoCols+` FROM todos WHERE id = $1 AND user_id = $2`, id, u.ID))
@@ -192,7 +192,7 @@ func (a *App) handleUpdateTodo(w http.ResponseWriter, r *http.Request, u User) {
 func (a *App) handleSetDone(w http.ResponseWriter, r *http.Request, u User) {
 	id, ok := pathID(r)
 	if !ok {
-		writeError(w, http.StatusNotFound, "Tugas tidak ditemukan.")
+		writeError(w, http.StatusNotFound, "Task not found.")
 		return
 	}
 	var in struct {
@@ -202,7 +202,7 @@ func (a *App) handleSetDone(w http.ResponseWriter, r *http.Request, u User) {
 		return
 	}
 	if in.Done == nil {
-		writeError(w, http.StatusBadRequest, "Status selesai wajib diisi.")
+		writeError(w, http.StatusBadRequest, "Completion status is required.")
 		return
 	}
 
@@ -219,13 +219,13 @@ func (a *App) handleSetDone(w http.ResponseWriter, r *http.Request, u User) {
 		return
 	}
 	if n, _ := res.RowsAffected(); n == 0 {
-		writeError(w, http.StatusNotFound, "Tugas tidak ditemukan.")
+		writeError(w, http.StatusNotFound, "Task not found.")
 		return
 	}
 	t, err := scanTodo(a.db.QueryRow(`SELECT `+todoCols+` FROM todos WHERE id = $1 AND user_id = $2`, id, u.ID))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			writeError(w, http.StatusNotFound, "Tugas tidak ditemukan.")
+			writeError(w, http.StatusNotFound, "Task not found.")
 			return
 		}
 		serverError(w, "read todo", err)
@@ -237,7 +237,7 @@ func (a *App) handleSetDone(w http.ResponseWriter, r *http.Request, u User) {
 func (a *App) handleDeleteTodo(w http.ResponseWriter, r *http.Request, u User) {
 	id, ok := pathID(r)
 	if !ok {
-		writeError(w, http.StatusNotFound, "Tugas tidak ditemukan.")
+		writeError(w, http.StatusNotFound, "Task not found.")
 		return
 	}
 	res, err := a.db.Exec(`DELETE FROM todos WHERE id = $1 AND user_id = $2`, id, u.ID)
@@ -246,7 +246,7 @@ func (a *App) handleDeleteTodo(w http.ResponseWriter, r *http.Request, u User) {
 		return
 	}
 	if n, _ := res.RowsAffected(); n == 0 {
-		writeError(w, http.StatusNotFound, "Tugas tidak ditemukan.")
+		writeError(w, http.StatusNotFound, "Task not found.")
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)

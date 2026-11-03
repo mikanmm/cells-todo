@@ -24,10 +24,10 @@ function DiscordSuccess({ message, onClose }) {
         <span className="mail-success-icon" aria-hidden="true">
           ✓
         </span>
-        <h2 id="discord-success-title">Pesan berhasil dikirim</h2>
+        <h2 id="discord-success-title">Message sent successfully</h2>
         <p>{message}</p>
         <button className="btn btn-primary" type="button" autoFocus onClick={onClose}>
-          Oke
+          OK
         </button>
       </div>
     </dialog>,
@@ -81,7 +81,7 @@ export default function DiscordNotifySettings({ onSessionExpired }) {
         setInfo(data)
         setConfig(data.schedule)
         setWebhook('')
-        setNotice('Webhook, template, dan jadwal Discord berhasil disimpan.')
+        setNotice('Discord webhook, template, and schedule saved successfully.')
       } else if (kind === 'preview') {
         setPreview((await api.previewDiscord(config)).content)
       } else {
@@ -110,11 +110,11 @@ export default function DiscordNotifySettings({ onSessionExpired }) {
                 setReload((value) => value + 1)
               }}
             >
-              Muat ulang
+              Reload
             </button>
           </>
         ) : (
-          <p role="status">Memuat pengaturan Discord...</p>
+          <p role="status">Loading Discord settings...</p>
         )}
       </section>
     )
@@ -122,7 +122,7 @@ export default function DiscordNotifySettings({ onSessionExpired }) {
     <section className="settings-panel discord-panel" aria-busy={!!busy}>
       <div>
         <h2>Discord Webhook</h2>
-        <p className="muted">Kirim pengingat ke channel teks Discord melalui webhook.</p>
+        <p className="muted">Send reminders to a Discord text channel using a webhook.</p>
       </div>
       {error && (
         <p role="alert" className="form-error">
@@ -135,7 +135,7 @@ export default function DiscordNotifySettings({ onSessionExpired }) {
         </p>
       )}
       <p className={`notify-status ${info.configured ? 'ready' : ''}`}>
-        {info.configured ? 'Webhook tersimpan' : 'Webhook belum dikonfigurasi'}
+        {info.configured ? 'Webhook saved' : 'Webhook not configured'}
       </p>
       <form
         onSubmit={(e) => {
@@ -144,7 +144,7 @@ export default function DiscordNotifySettings({ onSessionExpired }) {
         }}
       >
         <label className="field" htmlFor="discord-webhook">
-          <span>URL webhook Discord</span>
+          <span>Discord webhook URL</span>
           <input
             id="discord-webhook"
             type="password"
@@ -155,13 +155,13 @@ export default function DiscordNotifySettings({ onSessionExpired }) {
             onChange={(e) => setWebhook(e.target.value)}
             placeholder={
               info.configured
-                ? 'Kosongkan untuk mempertahankan webhook tersimpan'
+                ? 'Leave blank to keep the saved webhook'
                 : 'https://discord.com/api/webhooks/...'
             }
           />
         </label>
         <div className="notify-schedule">
-          <h3>Cronjob harian</h3>
+          <h3>Daily schedule</h3>
           <label>
             <input
               type="checkbox"
@@ -169,59 +169,59 @@ export default function DiscordNotifySettings({ onSessionExpired }) {
               disabled={!!busy}
               onChange={(e) => change('enabled', e.target.checked)}
             />{' '}
-            Aktifkan pengiriman otomatis ke Discord
+            Enable automatic delivery to Discord
           </label>
-          <span>Jam pengiriman (WIB)</span>
+          <span>Delivery time (WIB)</span>
           <NotifyHourPicker
             value={config.hour}
             disabled={!!busy}
             onChange={(value) => change('hour', value)}
           />
           <p className="muted settings-help">
-            Setiap hari dalam zona Asia/Jakarta. Server harus berjalan. Jadwal yang terlewat
-            diproses satu kali saat server aktif kembali.
+            Runs daily in the Asia/Jakarta time zone. The server must remain running. A missed
+            delivery is processed once when the server becomes available again.
           </p>
           {info.nextRun?.Valid && (
             <p className="muted">
-              Jadwal tersimpan berikutnya:{' '}
-              {new Date(info.nextRun.Time).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}{' '}
+              Next scheduled delivery:{' '}
+              {new Date(info.nextRun.Time).toLocaleString('en-GB', { timeZone: 'Asia/Jakarta' })}{' '}
               WIB
             </p>
           )}
-          {info.lastStatus && <p className="muted">Status terakhir: {info.lastStatus}</p>}
+          {info.lastStatus && <p className="muted">Last delivery status: {info.lastStatus}</p>}
         </div>
 
         <p className="muted settings-help">
-          Buat melalui pengaturan channel Discord → Integrations → Webhooks. URL disimpan di server
-          dan tidak ditampilkan kembali. Simpan perubahan URL sebelum mengirim tes.
+          Create a webhook in Discord channel settings → Integrations → Webhooks. The URL is stored
+          on the server and is not displayed again. Save URL changes before sending a test.
         </p>
         <label className="field" htmlFor="discord-mode">
-          <span>Mode pesan</span>
+          <span>Message mode</span>
           <select
             id="discord-mode"
             value={config.mode}
             disabled={!!busy}
             onChange={(e) => change('mode', e.target.value)}
           >
-            <option value="text">Teks biasa</option>
-            <option value="template">Script custom (Go template)</option>
+            <option value="text">Plain text</option>
+            <option value="template">Custom template (Go template)</option>
           </select>
         </label>
         {config.mode === 'template' && (
           <div className="notify-hint">
-            <p>Gunakan parameter tugas aktif milik Anda:</p>
+            <p>Use the following fields from your active tasks:</p>
             <code>{'{{.Name}} {{.Date}} {{.Total}} {{.Urgent}} {{.Medium}} {{.Low}}'}</code>
             <p>
               <code>{'{{range .HighTasks}}- {{.Title}}{{end}}'}</code>
             </p>
             <p className="settings-help">
-              Daftar: .Tasks, .HighTasks, .MediumTasks, .LowTasks. Mendukung kondisi if dan
-              perulangan range.
+              Lists: .Tasks, .HighTasks, .MediumTasks, .LowTasks. Supports if conditions and range
+              loops.
             </p>
           </div>
         )}
         <label className="field" htmlFor="discord-subject">
-          <span>Judul pesan</span>
+          <span>Message title</span>
           <input
             id="discord-subject"
             value={config.subject}
@@ -232,7 +232,7 @@ export default function DiscordNotifySettings({ onSessionExpired }) {
           />
         </label>
         <label className="field" htmlFor="discord-body">
-          <span>Pesan</span>
+          <span>Message</span>
           <textarea
             id="discord-body"
             rows={7}
@@ -244,12 +244,12 @@ export default function DiscordNotifySettings({ onSessionExpired }) {
           />
         </label>
         <p className="muted settings-help">
-          Discord mendukung teks/Markdown. Hasil judul dan pesan maksimal 2.000 karakter. Mention
-          otomatis dinonaktifkan.
+          Discord supports text and Markdown. The combined title and message may contain up to 2,000
+          characters. Automatic mentions are disabled.
         </p>
         <div className="notify-actions">
           <button type="submit" className="btn btn-primary" disabled={!!busy}>
-            {busy === 'save' ? 'Menyimpan...' : 'Simpan pengaturan Discord'}
+            {busy === 'save' ? 'Saving...' : 'Save Discord settings'}
           </button>
           <button
             type="button"
@@ -257,7 +257,7 @@ export default function DiscordNotifySettings({ onSessionExpired }) {
             disabled={!!busy}
             onClick={() => action('preview')}
           >
-            Pratinjau
+            Preview
           </button>
           <button
             type="button"
@@ -265,7 +265,7 @@ export default function DiscordNotifySettings({ onSessionExpired }) {
             disabled={!!busy || !info.configured || !!webhook}
             onClick={() => action('test')}
           >
-            {busy === 'test' ? 'Mengirim...' : 'Kirim tes Discord'}
+            {busy === 'test' ? 'Sending...' : 'Send Discord test'}
           </button>
           <button
             type="button"
@@ -273,13 +273,13 @@ export default function DiscordNotifySettings({ onSessionExpired }) {
             disabled={!!busy || !info.configured || !!webhook}
             onClick={() => action('send')}
           >
-            {busy === 'send' ? 'Mengirim...' : 'Kirim sekarang'}
+            {busy === 'send' ? 'Sending...' : 'Send now'}
           </button>
         </div>
       </form>
       {preview && (
         <div className="notify-preview" role="status">
-          <h3>Pratinjau pesan Discord</h3>
+          <h3>Discord message preview</h3>
           <pre>{preview}</pre>
         </div>
       )}
