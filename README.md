@@ -30,6 +30,8 @@ Gunakan pesan biasa atau template yang mengambil informasi dari tugas, seperti n
 
 Setiap akun memiliki tugas, kategori, dan pengaturan notifikasinya sendiri. Satu instalasi dapat digunakan oleh beberapa akun dengan daftar tugas masing-masing.
 
+Sesi login berlaku maksimal 6 jam sejak masuk. Setelah itu, pengguna perlu login kembali; aktivitas dan refresh halaman tidak memperpanjang sesi.
+
 ## Contoh penggunaan
 
 Mulai hari dengan mencatat pekerjaan dan memberi prioritas pada tugas yang paling penting. Tambahkan kategori seperti **Kuliah**, **Kerja**, atau **Pribadi**, lalu tentukan tanggal jatuh temponya. Setelah selesai, tandai tugas tersebut untuk memperbarui progres.

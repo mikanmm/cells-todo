@@ -15,6 +15,44 @@ export default function App() {
       .catch(() => setUser(null))
   }, [])
 
+  useEffect(() => {
+    if (!user?.sessionExpiresAt) return
+    let active = true
+    let checking = false
+    let timer
+
+    async function checkSession() {
+      if (checking) return
+      checking = true
+      window.clearTimeout(timer)
+      try {
+        const current = await api.me()
+        if (active) setUser(current)
+      } catch (error) {
+        if (!active) return
+        if (error.status === 401) setUser(null)
+        else timer = window.setTimeout(checkSession, 30000)
+      } finally {
+        checking = false
+      }
+    }
+
+    function onVisible() {
+      if (document.visibilityState === 'visible') checkSession()
+    }
+
+    const remaining = Date.parse(user.sessionExpiresAt) - Date.now()
+    timer = window.setTimeout(checkSession, Math.max(0, remaining) + 100)
+    window.addEventListener('focus', checkSession)
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      active = false
+      window.clearTimeout(timer)
+      window.removeEventListener('focus', checkSession)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [user])
+
   const handleLogout = useCallback(async () => {
     try {
       await api.logout()

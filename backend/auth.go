@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
+	"math"
 	"net"
 	"net/http"
 	"strings"
@@ -19,16 +20,17 @@ import (
 
 const (
 	cookieName    = "cells_session"
-	sessionTTL    = 14 * 24 * time.Hour
+	sessionTTL    = 6 * time.Hour
 	bcryptCost    = 12
 	csrfHeader    = "X-Requested-With"
 	csrfHeaderVal = "cells"
 )
 
 type User struct {
-	ID          int64  `json:"id"`
-	Username    string `json:"username"`
-	DisplayName string `json:"displayName"`
+	ID               int64     `json:"id"`
+	Username         string    `json:"username"`
+	DisplayName      string    `json:"displayName"`
+	SessionExpiresAt time.Time `json:"sessionExpiresAt"`
 }
 
 type App struct {
@@ -100,12 +102,14 @@ func (a *App) auth(next func(http.ResponseWriter, *http.Request, User)) http.Han
 			return
 		}
 		var u User
+		var created, expires time.Time
+		now := time.Now().UTC()
 		err = a.db.QueryRow(
-			`SELECT u.id, u.username, u.display_name
+			`SELECT u.id, u.username, u.display_name, s.created_at, s.expires_at
 			   FROM sessions s JOIN users u ON u.id = s.user_id
-			  WHERE s.token_hash = $1 AND s.expires_at > $2`,
-			hashToken(c.Value), time.Now().UTC(),
-		).Scan(&u.ID, &u.Username, &u.DisplayName)
+			  WHERE s.token_hash = $1 AND s.expires_at > $2 AND s.created_at > $3`,
+			hashToken(c.Value), now, now.Add(-sessionTTL),
+		).Scan(&u.ID, &u.Username, &u.DisplayName, &created, &expires)
 		if errors.Is(err, sql.ErrNoRows) {
 			clearCookie(w, r)
 			writeError(w, http.StatusUnauthorized, "Sesi berakhir. Silakan masuk lagi.")
@@ -115,6 +119,12 @@ func (a *App) auth(next func(http.ResponseWriter, *http.Request, User)) http.Han
 			log.Printf("auth: %v", err)
 			writeError(w, http.StatusInternalServerError, "Terjadi kesalahan pada server.")
 			return
+		}
+		// Batasi juga sesi lama yang dibuat saat masa berlaku masih 14 hari.
+		u.SessionExpiresAt = expires
+		if limit := created.Add(sessionTTL); expires.After(limit) {
+			u.SessionExpiresAt = limit
+			setSessionCookie(w, r, c.Value, limit)
 		}
 		next(w, r, u)
 	}
@@ -170,10 +180,11 @@ func (a *App) handleLogin(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "Terjadi kesalahan pada server.")
 		return
 	}
-	expires := time.Now().UTC().Add(sessionTTL)
+	now := time.Now().UTC()
+	expires := now.Add(sessionTTL)
 	if _, err := a.db.Exec(
-		`INSERT INTO sessions (token_hash, user_id, expires_at) VALUES ($1, $2, $3)`,
-		hashToken(token), u.ID, expires,
+		`INSERT INTO sessions (token_hash, user_id, expires_at, created_at) VALUES ($1, $2, $3, $4)`,
+		hashToken(token), u.ID, expires, now,
 	); err != nil {
 		log.Printf("login session: %v", err)
 		writeError(w, http.StatusInternalServerError, "Terjadi kesalahan pada server.")
@@ -181,17 +192,22 @@ func (a *App) handleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	a.limiter.reset(ip)
+	setSessionCookie(w, r, token, expires)
+	u.SessionExpiresAt = expires
+	writeJSON(w, http.StatusOK, u)
+}
+
+func setSessionCookie(w http.ResponseWriter, r *http.Request, token string, expires time.Time) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     cookieName,
 		Value:    token,
 		Path:     "/",
 		Expires:  expires,
-		MaxAge:   int(sessionTTL.Seconds()),
+		MaxAge:   max(1, int(math.Ceil(time.Until(expires).Seconds()))),
 		HttpOnly: true,
 		Secure:   isHTTPS(r),
 		SameSite: http.SameSiteLaxMode,
 	})
-	writeJSON(w, http.StatusOK, u)
 }
 
 func (a *App) handleLogout(w http.ResponseWriter, r *http.Request) {
@@ -210,7 +226,8 @@ func (a *App) cleanupSessions() {
 	t := time.NewTicker(time.Hour)
 	defer t.Stop()
 	for range t.C {
-		if _, err := a.db.Exec(`DELETE FROM sessions WHERE expires_at < $1`, time.Now().UTC()); err != nil {
+		now := time.Now().UTC()
+		if _, err := a.db.Exec(`DELETE FROM sessions WHERE expires_at <= $1 OR created_at <= $2`, now, now.Add(-sessionTTL)); err != nil {
 			log.Printf("cleanup: %v", err)
 		}
 	}
@@ -221,6 +238,7 @@ func clearCookie(w http.ResponseWriter, r *http.Request) {
 		Name:     cookieName,
 		Value:    "",
 		Path:     "/",
+		Expires:  time.Unix(1, 0).UTC(),
 		MaxAge:   -1,
 		HttpOnly: true,
 		Secure:   isHTTPS(r),
