@@ -9,29 +9,37 @@ import (
 	"strings"
 	"time"
 	"unicode/utf8"
+
+	"github.com/lib/pq"
 )
 
 type Todo struct {
-	ID        int64      `json:"id"`
-	Title     string     `json:"title"`
-	Notes     string     `json:"notes"`
-	Priority  string     `json:"priority"`
-	Category  string     `json:"category"`
-	DueDate   *string    `json:"dueDate"`
-	Done      bool       `json:"done"`
-	DoneAt    *time.Time `json:"doneAt"`
-	CreatedAt time.Time  `json:"createdAt"`
+	ID         int64         `json:"id"`
+	Title      string        `json:"title"`
+	Notes      string        `json:"notes"`
+	Priority   string        `json:"priority"`
+	Category   string        `json:"category"`
+	DueDate    *string       `json:"dueDate"`
+	RepeatType string        `json:"repeatType"`
+	RepeatDays pq.Int64Array `json:"repeatDays"`
+	Notify     bool          `json:"notify"`
+	Done       bool          `json:"done"`
+	DoneAt     *time.Time    `json:"doneAt"`
+	CreatedAt  time.Time     `json:"createdAt"`
 }
 
 type todoInput struct {
-	Title    string `json:"title"`
-	Notes    string `json:"notes"`
-	Priority string `json:"priority"`
-	Category string `json:"category"`
-	DueDate  string `json:"dueDate"`
+	Title      string        `json:"title"`
+	Notes      string        `json:"notes"`
+	Priority   string        `json:"priority"`
+	Category   string        `json:"category"`
+	DueDate    string        `json:"dueDate"`
+	RepeatType string        `json:"repeatType"`
+	RepeatDays pq.Int64Array `json:"repeatDays"`
+	Notify     bool          `json:"notify"`
 }
 
-const todoCols = `id, title, notes, priority, category, due_date, done, done_at, created_at`
+const todoCols = `id, title, notes, priority, category, due_date, done, done_at, created_at, repeat_type, repeat_days, notify`
 
 type rowScanner interface{ Scan(dest ...any) error }
 
@@ -41,7 +49,7 @@ func scanTodo(row rowScanner) (Todo, error) {
 		due    sql.NullTime
 		doneAt sql.NullTime
 	)
-	if err := row.Scan(&t.ID, &t.Title, &t.Notes, &t.Priority, &t.Category, &due, &t.Done, &doneAt, &t.CreatedAt); err != nil {
+	if err := row.Scan(&t.ID, &t.Title, &t.Notes, &t.Priority, &t.Category, &due, &t.Done, &doneAt, &t.CreatedAt, &t.RepeatType, &t.RepeatDays, &t.Notify); err != nil {
 		return t, err
 	}
 	if due.Valid {
@@ -81,6 +89,9 @@ func (in *todoInput) validate() (due any, msg string) {
 		return nil, "Unknown priority."
 	}
 
+	if msg := in.validateRepeat(); msg != "" {
+		return nil, msg
+	}
 	if in.DueDate == "" {
 		return nil, ""
 	}
@@ -102,6 +113,10 @@ func serverError(w http.ResponseWriter, where string, err error) {
 }
 
 func (a *App) handleListTodos(w http.ResponseWriter, r *http.Request, u User) {
+	if err := a.refreshRepeatingTodos(); err != nil {
+		serverError(w, "refresh repeating todos", err)
+		return
+	}
 	rows, err := a.db.Query(`SELECT `+todoCols+` FROM todos WHERE user_id = $1 ORDER BY id DESC`, u.ID)
 	if err != nil {
 		serverError(w, "list todos", err)
@@ -138,8 +153,8 @@ func (a *App) handleCreateTodo(w http.ResponseWriter, r *http.Request, u User) {
 
 	var id int64
 	err := a.db.QueryRow(
-		`INSERT INTO todos (user_id, title, notes, priority, category, due_date) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-		u.ID, in.Title, in.Notes, in.Priority, in.Category, due,
+		`INSERT INTO todos (user_id, title, notes, priority, category, due_date, repeat_type, repeat_days, notify) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
+		u.ID, in.Title, in.Notes, in.Priority, in.Category, due, in.RepeatType, in.RepeatDays, in.Notify,
 	).Scan(&id)
 	if err != nil {
 		serverError(w, "create todo", err)
@@ -170,8 +185,8 @@ func (a *App) handleUpdateTodo(w http.ResponseWriter, r *http.Request, u User) {
 	}
 
 	res, err := a.db.Exec(
-		`UPDATE todos SET updated_at = CURRENT_TIMESTAMP, title = $1, notes = $2, priority = $3, category = $4, due_date = $5 WHERE id = $6 AND user_id = $7`,
-		in.Title, in.Notes, in.Priority, in.Category, due, id, u.ID,
+		`UPDATE todos SET updated_at = CURRENT_TIMESTAMP, title = $1, notes = $2, priority = $3, category = $4, due_date = $5, repeat_type = $8, repeat_days = $9, notify = $10 WHERE id = $6 AND user_id = $7`,
+		in.Title, in.Notes, in.Priority, in.Category, due, id, u.ID, in.RepeatType, in.RepeatDays, in.Notify,
 	)
 	if err != nil {
 		serverError(w, "update todo", err)

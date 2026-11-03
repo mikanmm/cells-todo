@@ -38,7 +38,7 @@ const defaultNotifyTable = `<div style="font-family:Arial,sans-serif;color:#2537
 {{else}}<tr><td colspan="5" align="center" style="padding:24px;color:#94a3b8">-</td></tr>{{end}}</tbody>
 <tfoot><tr style="background:#f7fafc"><td colspan="5"><strong>Total: {{.Total}} active tasks</strong> · Urgent: {{.Urgent}} · Medium: {{.Medium}} · Low: {{.Low}}</td></tr></tfoot>
 </table>
-<p style="font-size:12px;color:#94a3b8;margin-top:16px">Sorted by priority and due date. Up to 100 tasks are shown; totals include all active tasks.</p>
+<p style="font-size:12px;color:#94a3b8;margin-top:16px">Sorted by priority and due date. Up to 100 tasks are shown; totals include active tasks with Notify enabled.</p>
 </div>`
 
 func validateNotifyFormat(format string) error {
@@ -166,11 +166,14 @@ func validateTemplateTree(node parse.Node, depth int) error {
 	return nil
 }
 func (a *App) renderNotify(userID int64, subject, body string, formats ...string) (string, string, error) {
+	if err := a.refreshRepeatingTodos(); err != nil {
+		return "", "", errors.New("Unable to refresh repeating tasks.")
+	}
 	data := notifyTemplateData{Date: time.Now().In(jakarta()).Format("02 January 2006")}
 	if err := a.db.QueryRow(`SELECT display_name FROM users WHERE id=$1`, userID).Scan(&data.Name); err != nil {
 		return "", "", errors.New("Unable to retrieve the task owner.")
 	}
-	rows, err := a.db.Query(`SELECT `+todoCols+` FROM todos WHERE user_id=$1 AND done=FALSE ORDER BY CASE priority WHEN 'high' THEN 0 WHEN 'medium' THEN 1 ELSE 2 END, due_date NULLS LAST, id`, userID)
+	rows, err := a.db.Query(`SELECT `+todoCols+` FROM todos WHERE user_id=$1 AND done=FALSE AND notify=TRUE ORDER BY CASE priority WHEN 'high' THEN 0 WHEN 'medium' THEN 1 ELSE 2 END, due_date NULLS LAST, id`, userID)
 	if err != nil {
 		return "", "", errors.New("Unable to retrieve tasks.")
 	}
@@ -307,6 +310,9 @@ func (a *App) runNotifyScheduler() {
 	ticker := time.NewTicker(15 * time.Second)
 	defer ticker.Stop()
 	for range ticker.C {
+		if err := a.refreshRepeatingTodos(); err != nil {
+			continue
+		}
 		a.processNotifySchedule()
 		a.processDiscordSchedule()
 	}
