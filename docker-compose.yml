@@ -1,0 +1,43 @@
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: cells
+      POSTGRES_USER: cells
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?isi DB_PASSWORD di file .env}
+      TZ: Asia/Jakarta
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cells -d cells"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: cells
+      DB_USER: cells
+      DB_PASSWORD: ${DB_PASSWORD}
+      PORT: "8081"
+
+  web:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      # Hanya bisa diakses dari komputer ini; tunnel Anda mengarah ke http://localhost:8080
+      - "127.0.0.1:${WEB_PORT:-8080}:80"
+
+volumes:
+  postgres_data:

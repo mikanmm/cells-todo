@@ -1,0 +1,21 @@
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+
+# Installed dependencies
+node_modules/
+vendor/
+
+# Generated builds and caches
+dist/
+.cache/
+.vite/
+coverage/
+*.log
+
+# Local Go binaries and test output
+/backend/server
+/backend/server.exe
+*.test
+*.out
