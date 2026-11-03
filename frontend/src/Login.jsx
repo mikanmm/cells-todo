@@ -32,7 +32,7 @@ export default function Login({ onLogin }) {
           <GemStatic tone="medium" size={56} />
           <GemStatic tone="high" size={34} />
         </div>
-        <h1 className="brand-title">cells</h1>
+        <h1 className="brand-title">Cells</h1>
         <p className="muted">Sign in to view your tasks.</p>
 
         <form onSubmit={submit} className="login-form">
@@ -73,7 +73,7 @@ export default function Login({ onLogin }) {
 
         <p className="login-note">
           Accounts are created by an administrator. Please contact your administrator if you need an
-          account. Sessions expire six hours after sign-in, after which you must sign in again.
+          account.
         </p>
       </section>
     </main>
