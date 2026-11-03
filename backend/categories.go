@@ -37,7 +37,7 @@ func (a *App) handleAddCategory(w http.ResponseWriter, r *http.Request, u User) 
 	}
 	in.Name = strings.TrimSpace(in.Name)
 	if in.Name == "" || utf8.RuneCountInString(in.Name) > 40 {
-		writeError(w, 400, "Kategori harus 1-40 karakter.")
+		writeError(w, 400, "Category names must contain 1–40 characters.")
 		return
 	}
 	res, err := a.db.Exec(`INSERT INTO categories(user_id,name) VALUES($1,$2) ON CONFLICT DO NOTHING`, u.ID, in.Name)
@@ -51,7 +51,7 @@ func (a *App) handleAddCategory(w http.ResponseWriter, r *http.Request, u User) 
 		return
 	}
 	if count == 0 {
-		writeError(w, http.StatusConflict, "Kategori sudah ada.")
+		writeError(w, http.StatusConflict, "This category already exists.")
 		return
 	}
 	writeJSON(w, http.StatusCreated, in)
@@ -72,7 +72,7 @@ func (a *App) handleDeleteCategory(w http.ResponseWriter, r *http.Request, u Use
 	}
 	n, _ := res.RowsAffected()
 	if n == 0 {
-		writeError(w, 404, "Kategori tidak ditemukan.")
+		writeError(w, 404, "Category not found.")
 		return
 	}
 	_, err = tx.Exec(`UPDATE todos SET category='', updated_at=CURRENT_TIMESTAMP WHERE user_id=$1 AND category=$2`, u.ID, name)

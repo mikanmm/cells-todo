@@ -41,8 +41,8 @@ type App struct {
 }
 
 func newApp(db *sql.DB) *App {
-	// Hash palsu dipakai agar waktu respons login sama, baik username ada maupun tidak.
-	dummy, _ := bcrypt.GenerateFromPassword([]byte("tidak-dipakai"), bcryptCost)
+	// Use a dummy hash to reduce timing differences between known and unknown usernames.
+	dummy, _ := bcrypt.GenerateFromPassword([]byte("unused-dummy-value"), bcryptCost)
 	return &App{db: db, limiter: newLoginLimiter(8, 10*time.Minute), dummyHash: dummy, mail: loadMailConfig()}
 }
 
@@ -78,15 +78,15 @@ func (a *App) routes() http.Handler {
 	return a.csrf(mux)
 }
 
-// csrf menolak request yang mengubah data jika tidak membawa header khusus.
-// Browser tidak bisa mengirim header ini dari situs lain tanpa izin CORS.
+// csrf rejects state-changing requests without the required custom header.
+// Browsers cannot send this header from another origin without CORS permission.
 func (a *App) csrf(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet, http.MethodHead, http.MethodOptions:
 		default:
 			if r.Header.Get(csrfHeader) != csrfHeaderVal {
-				writeError(w, http.StatusForbidden, "Permintaan ditolak.")
+				writeError(w, http.StatusForbidden, "Request denied.")
 				return
 			}
 		}
@@ -98,7 +98,7 @@ func (a *App) auth(next func(http.ResponseWriter, *http.Request, User)) http.Han
 	return func(w http.ResponseWriter, r *http.Request) {
 		c, err := r.Cookie(cookieName)
 		if err != nil || c.Value == "" {
-			writeError(w, http.StatusUnauthorized, "Silakan masuk terlebih dahulu.")
+			writeError(w, http.StatusUnauthorized, "Please sign in first.")
 			return
 		}
 		var u User
@@ -112,15 +112,15 @@ func (a *App) auth(next func(http.ResponseWriter, *http.Request, User)) http.Han
 		).Scan(&u.ID, &u.Username, &u.DisplayName, &created, &expires)
 		if errors.Is(err, sql.ErrNoRows) {
 			clearCookie(w, r)
-			writeError(w, http.StatusUnauthorized, "Sesi berakhir. Silakan masuk lagi.")
+			writeError(w, http.StatusUnauthorized, "Your session has expired. Please sign in again.")
 			return
 		}
 		if err != nil {
 			log.Printf("auth: %v", err)
-			writeError(w, http.StatusInternalServerError, "Terjadi kesalahan pada server.")
+			writeError(w, http.StatusInternalServerError, "An internal server error occurred.")
 			return
 		}
-		// Batasi juga sesi lama yang dibuat saat masa berlaku masih 14 hari.
+		// Apply the same limit to legacy sessions issued with a 14-day lifetime.
 		u.SessionExpiresAt = expires
 		if limit := created.Add(sessionTTL); expires.After(limit) {
 			u.SessionExpiresAt = limit
@@ -140,13 +140,13 @@ func (a *App) handleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	in.Username = strings.TrimSpace(in.Username)
 	if in.Username == "" || in.Password == "" {
-		writeError(w, http.StatusBadRequest, "Isi username dan password.")
+		writeError(w, http.StatusBadRequest, "Please enter your username and password.")
 		return
 	}
 
 	ip := clientIP(r)
 	if !a.limiter.allow(ip) {
-		writeError(w, http.StatusTooManyRequests, "Terlalu banyak percobaan masuk. Coba lagi dalam 10 menit.")
+		writeError(w, http.StatusTooManyRequests, "Too many sign-in attempts. Please try again in 10 minutes.")
 		return
 	}
 
@@ -161,23 +161,23 @@ func (a *App) handleLogin(w http.ResponseWriter, r *http.Request) {
 	case errors.Is(err, sql.ErrNoRows):
 		_ = bcrypt.CompareHashAndPassword(a.dummyHash, []byte(in.Password))
 		a.limiter.fail(ip)
-		writeError(w, http.StatusUnauthorized, "Username atau password salah.")
+		writeError(w, http.StatusUnauthorized, "Incorrect username or password.")
 		return
 	case err != nil:
 		log.Printf("login: %v", err)
-		writeError(w, http.StatusInternalServerError, "Terjadi kesalahan pada server.")
+		writeError(w, http.StatusInternalServerError, "An internal server error occurred.")
 		return
 	}
 
 	if bcrypt.CompareHashAndPassword([]byte(hash), []byte(in.Password)) != nil {
 		a.limiter.fail(ip)
-		writeError(w, http.StatusUnauthorized, "Username atau password salah.")
+		writeError(w, http.StatusUnauthorized, "Incorrect username or password.")
 		return
 	}
 
 	token, err := newToken()
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "Terjadi kesalahan pada server.")
+		writeError(w, http.StatusInternalServerError, "An internal server error occurred.")
 		return
 	}
 	now := time.Now().UTC()
@@ -187,7 +187,7 @@ func (a *App) handleLogin(w http.ResponseWriter, r *http.Request) {
 		hashToken(token), u.ID, expires, now,
 	); err != nil {
 		log.Printf("login session: %v", err)
-		writeError(w, http.StatusInternalServerError, "Terjadi kesalahan pada server.")
+		writeError(w, http.StatusInternalServerError, "An internal server error occurred.")
 		return
 	}
 
@@ -274,7 +274,7 @@ func hashToken(token string) string {
 	return hex.EncodeToString(sum[:])
 }
 
-// loginLimiter membatasi percobaan login gagal per alamat IP.
+// loginLimiter limits failed sign-in attempts per IP address.
 type loginLimiter struct {
 	mu     sync.Mutex
 	max    int
@@ -324,7 +324,7 @@ func (l *loginLimiter) reset(ip string) {
 func decode(w http.ResponseWriter, r *http.Request, dst any) bool {
 	r.Body = http.MaxBytesReader(w, r.Body, 1<<16)
 	if err := json.NewDecoder(r.Body).Decode(dst); err != nil {
-		writeError(w, http.StatusBadRequest, "Data yang dikirim tidak valid.")
+		writeError(w, http.StatusBadRequest, "Invalid request data.")
 		return false
 	}
 	return true

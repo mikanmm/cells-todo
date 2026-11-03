@@ -18,7 +18,7 @@ async function request(method, path, body) {
       body: body === undefined ? undefined : JSON.stringify(body),
     })
   } catch {
-    throw new ApiError(0, 'Tidak dapat terhubung ke server. Periksa koneksi Anda.')
+    throw new ApiError(0, 'Unable to connect to the server. Please check your connection.')
   }
 
   if (res.status === 204) return null
@@ -27,10 +27,10 @@ async function request(method, path, body) {
   try {
     data = await res.json()
   } catch {
-    // respons bukan JSON
+    // The response is not JSON.
   }
   if (!res.ok) {
-    throw new ApiError(res.status, data?.error || 'Terjadi kesalahan. Coba lagi.')
+    throw new ApiError(res.status, data?.error || 'An error occurred. Please try again.')
   }
   return data
 }

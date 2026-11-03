@@ -1,4 +1,4 @@
-// Latar belakang kristal: bidang-bidang pucat yang tersusun seperti pecahan kuarsa.
+// Crystal background: pale facets arranged like fragments of quartz.
 export default function Backdrop() {
   return (
     <svg

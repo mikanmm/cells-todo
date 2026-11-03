@@ -19,8 +19,8 @@ func env(key, fallback string) string {
 	return fallback
 }
 
-// openDB membuka koneksi PostgreSQL dan menunggu sampai database siap
-// (container db butuh beberapa detik saat pertama kali dinyalakan).
+// openDB connects to PostgreSQL and waits until the database is ready
+// (the database container may take a few seconds to initialize).
 func openDB() (*sql.DB, error) {
 	u := &url.URL{Scheme: "postgres", Host: env("DB_HOST", "db") + ":" + env("DB_PORT", "5432"), Path: env("DB_NAME", "cells"), User: url.UserPassword(env("DB_USER", "cells"), os.Getenv("DB_PASSWORD"))}
 	q := u.Query()
@@ -39,10 +39,10 @@ func openDB() (*sql.DB, error) {
 		if lastErr = db.Ping(); lastErr == nil {
 			return db, nil
 		}
-		log.Printf("menunggu database (%d/45): %v", i, lastErr)
+		log.Printf("waiting for the database (%d/45): %v", i, lastErr)
 		time.Sleep(2 * time.Second)
 	}
-	return nil, fmt.Errorf("database tidak dapat dihubungi: %w", lastErr)
+	return nil, fmt.Errorf("unable to connect to the database: %w", lastErr)
 }
 
 var schema = []string{

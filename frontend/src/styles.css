@@ -1,4 +1,4 @@
-/* cells — tema kristal: terang, sejuk, berfacet. */
+/* cells — a light, cool-toned, faceted crystal theme. */
 
 :root {
   --frost: #f2fafc;
@@ -92,7 +92,7 @@ p {
   color: var(--ink-soft);
 }
 
-/* ---------- Kartu kaca dengan satu bidang facet di sudut ---------- */
+/* ---------- Glass cards with a single corner facet ---------- */
 
 .card {
   position: relative;
@@ -122,7 +122,7 @@ p {
   position: relative;
 }
 
-/* ---------- Tombol dan kolom isian ---------- */
+/* ---------- Buttons and input fields ---------- */
 
 .btn {
   font: inherit;
@@ -219,7 +219,7 @@ p {
   color: var(--rose-deep);
 }
 
-/* ---------- Halaman masuk ---------- */
+/* ---------- Sign-in page ---------- */
 
 .login-wrap {
   min-height: 100vh;
@@ -265,7 +265,7 @@ p {
   color: var(--ink-soft);
 }
 
-/* ---------- Kerangka halaman utama ---------- */
+/* ---------- Main page layout ---------- */
 
 .shell {
   max-width: 1100px;
@@ -432,7 +432,7 @@ p {
   color: #fff;
 }
 
-/* ---------- Form tambah / ubah ---------- */
+/* ---------- Create and edit forms ---------- */
 
 .form {
   padding: 12px 14px;
@@ -525,7 +525,7 @@ p {
   appearance: none;
 }
 
-/* ---------- Daftar tugas ---------- */
+/* ---------- Task list ---------- */
 
 .group {
   display: grid;
@@ -687,7 +687,7 @@ p {
   color: var(--ink-soft);
 }
 
-/* ---------- Permata ---------- */
+/* ---------- Gems ---------- */
 
 .gem polygon {
   fill: var(--gem);
@@ -726,7 +726,7 @@ p {
   transform: scale(0.92);
 }
 
-/* ---------- Notifikasi ---------- */
+/* ---------- Notifications ---------- */
 
 .toast {
   position: fixed;
@@ -742,7 +742,7 @@ p {
   box-shadow: 0 12px 30px -10px rgba(27, 52, 70, 0.6);
 }
 
-/* ---------- Responsif ---------- */
+/* ---------- Responsive layout ---------- */
 
 @media (max-width: 860px) {
   .shell {

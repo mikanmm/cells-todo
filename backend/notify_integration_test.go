@@ -168,7 +168,7 @@ func TestNotifyPostgres(t *testing.T) {
 	if err := db.QueryRow(`SELECT last_run,next_run,last_status FROM notify_schedule WHERE user_id=$1`, u.ID).Scan(&run, &next, &lastStatus); err != nil {
 		t.Fatal(err)
 	}
-	if !run.Valid || !next.Valid || !strings.Contains(lastStatus, "Gagal") {
+	if !run.Valid || !next.Valid || !strings.Contains(lastStatus, "Delivery failed") {
 		t.Fatalf("job was not processed: %v %v %s", run, next, lastStatus)
 	}
 	db.Exec(`UPDATE notify_mail_state SET last_attempt_at=NULL WHERE id=1`)
@@ -215,7 +215,7 @@ func TestNotifyPostgres(t *testing.T) {
 	db.Exec(`UPDATE notify_discord SET next_run=CURRENT_TIMESTAMP-INTERVAL '1 minute',last_attempt=NULL WHERE user_id=$1`, u.ID)
 	a.processDiscordSchedule()
 	_, _, dn, discordStatus, err := a.discordSettings(u.ID)
-	if err != nil || !dn.Valid || !strings.Contains(discordStatus, "berhasil") {
+	if err != nil || !dn.Valid || !strings.Contains(discordStatus, "successfully") {
 		t.Fatal("Discord scheduled send failed", discordStatus, err)
 	}
 }

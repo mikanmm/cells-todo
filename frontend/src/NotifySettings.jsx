@@ -70,7 +70,7 @@ export default function NotifySettings({ onSessionExpired, embedded = false }) {
       setRecipients(text)
       setSavedRecipients(text)
       setSettings((current) => ({ ...current, recipients: data.recipients }))
-      setNotice('Daftar penerima berhasil disimpan.')
+      setNotice('Recipient list saved successfully.')
     } catch (err) {
       fail(err)
     } finally {
@@ -88,12 +88,12 @@ export default function NotifySettings({ onSessionExpired, embedded = false }) {
         kind === 'test'
           ? await api.testNotifyEmail()
           : await api.broadcastEmail(subject.trim(), body, mode, format)
-      setNotice(`${result.accepted} penerima: ${result.message}`)
+      setNotice(`${result.accepted} recipients: ${result.message}`)
       setMailSuccess(result)
     } catch (err) {
       if (err.status === 0 || err.status === 502 || err.status === 504) {
         setError(
-          `${err.message} Jika koneksi terputus saat mengirim, periksa inbox atau log Hostinger sebelum mengulang pengiriman.`,
+          `${err.message} If the connection is interrupted during delivery, check your inbox or mail server logs before sending again.`,
         )
       } else fail(err)
     } finally {
@@ -116,8 +116,8 @@ export default function NotifySettings({ onSessionExpired, embedded = false }) {
         setScheduleInfo(await api.saveNotifySchedule(template))
         setNotice(
           enabled
-            ? `Template disimpan. Email dijadwalkan setiap hari pukul ${hour} WIB.`
-            : 'Template disimpan. Jadwal otomatis nonaktif.',
+            ? `Template saved. Email delivery is scheduled daily at ${hour} WIB.`
+            : 'Template saved. Automatic delivery is disabled.',
         )
       }
     } catch (err) {
@@ -139,11 +139,13 @@ export default function NotifySettings({ onSessionExpired, embedded = false }) {
   return (
     <section className={`${embedded ? '' : 'card '}settings-panel notify-panel`} aria-busy={!!busy}>
       <div>
-        <h2>Notify</h2>
-        <p className="muted">Kirim email dari akun info ke akun email Anda yang lain.</p>
+        <h2>Email notifications</h2>
+        <p className="muted">
+          Send reminders from your configured mailbox to your saved recipients.
+        </p>
       </div>
       <div className="notify-schedule">
-        <h3>Cronjob harian</h3>
+        <h3>Daily schedule</h3>
         <label>
           <input
             type="checkbox"
@@ -151,21 +153,21 @@ export default function NotifySettings({ onSessionExpired, embedded = false }) {
             disabled={!!busy}
             onChange={(e) => setEnabled(e.target.checked)}
           />{' '}
-          Aktifkan pengiriman otomatis
+          Enable automatic delivery
         </label>
         <div className="field">
-          <span id="notify-hour-label">Jam pengiriman (WIB)</span>
+          <span id="notify-hour-label">Delivery time (WIB)</span>
           <NotifyHourPicker value={hour} onChange={setHour} disabled={!!busy} />
         </div>
         <p className="muted settings-help">
-          Setiap hari pada jam yang dipilih, zona Asia/Jakarta. Tengah malam adalah 00:00. Jika jam
-          hari ini sudah lewat, jadwal dimulai besok. Server harus berjalan; jadwal tertunda
-          diproses saat server kembali aktif, maksimal satu pengiriman susulan.
+          Runs daily at the selected time in Asia/Jakarta. Midnight is 00:00. If the selected time
+          has already passed today, delivery starts tomorrow. The server must remain running; at
+          most one missed delivery is processed when the server becomes available again.
         </p>
         {scheduleInfo?.nextRun?.Valid && (
           <p className="muted">
-            Jadwal tersimpan berikutnya:{' '}
-            {new Date(scheduleInfo.nextRun.Time).toLocaleString('id-ID', {
+            Next scheduled delivery:{' '}
+            {new Date(scheduleInfo.nextRun.Time).toLocaleString('en-GB', {
               timeZone: 'Asia/Jakarta',
             })}{' '}
             WIB
@@ -173,7 +175,7 @@ export default function NotifySettings({ onSessionExpired, embedded = false }) {
         )}
         {scheduleInfo?.lastStatus && (
           <p className="muted" role="status">
-            Status terakhir: {scheduleInfo.lastStatus}
+            Last delivery status: {scheduleInfo.lastStatus}
           </p>
         )}
       </div>
@@ -190,33 +192,32 @@ export default function NotifySettings({ onSessionExpired, embedded = false }) {
       {!settings ? (
         error ? (
           <button className="btn btn-ghost" onClick={() => setReload((value) => value + 1)}>
-            Muat ulang
+            Reload
           </button>
         ) : (
           <p className="muted" role="status">
-            Memuat pengaturan email...
+            Loading email settings...
           </p>
         )
       ) : (
         <>
           <div className="notify-sender">
             <div>
-              <span className="muted">Pengirim</span>
+              <span className="muted">Sender</span>
               <strong>{settings.sender}</strong>
             </div>
             <span className={`notify-status ${settings.configured ? 'ready' : ''}`}>
-              {settings.configured ? 'SMTP dikonfigurasi' : 'Konfigurasi belum lengkap'}
+              {settings.configured ? 'SMTP configured' : 'Configuration incomplete'}
             </span>
           </div>
           {!settings.configured && (
             <p className="notify-hint">
-              {settings.configurationMessage} Setelah konfigurasi diperbarui, muat ulang halaman
-              ini.
+              {settings.configurationMessage} Reload this page after updating the configuration.
             </p>
           )}
           <form onSubmit={save}>
             <label className="field" htmlFor="notify-recipients">
-              <span>Email penerima</span>
+              <span>Recipient email addresses</span>
               <textarea
                 id="notify-recipients"
                 rows={4}
@@ -224,17 +225,18 @@ export default function NotifySettings({ onSessionExpired, embedded = false }) {
                 disabled={!!busy}
                 maxLength={3000}
                 onChange={(e) => setRecipients(e.target.value)}
-                placeholder="123@gmail.com; 234@gmail.com"
+                placeholder="first@example.com; second@example.com"
                 aria-describedby="notify-recipients-help"
               />
             </label>
             <p className="muted settings-help" id="notify-recipients-help">
-              Pisahkan alamat email dengan titik koma (;), contoh: 123@gmail.com; 234@gmail.com.
-              Maksimal {settings.maxRecipients} penerima. Daftar ini disimpan untuk akun Anda.
+              Separate email addresses with semicolons (;), for example: first@example.com;
+              second@example.com. Maximum: {settings.maxRecipients} recipients. This list is saved
+              for your account.
             </p>
             <div className="notify-actions">
               <button type="submit" className="btn btn-primary" disabled={!!busy}>
-                {busy === 'save' ? 'Menyimpan...' : 'Simpan penerima'}
+                {busy === 'save' ? 'Saving...' : 'Save recipients'}
               </button>
               <button
                 type="button"
@@ -242,13 +244,11 @@ export default function NotifySettings({ onSessionExpired, embedded = false }) {
                 disabled={!canSend}
                 onClick={() => send('test')}
               >
-                {busy === 'test' ? 'Mengirim tes...' : 'Kirim email tes'}
+                {busy === 'test' ? 'Sending test...' : 'Send test email'}
               </button>
             </div>
             {dirty && (
-              <p className="muted settings-help">
-                Simpan perubahan penerima sebelum mengirim email.
-              </p>
+              <p className="muted settings-help">Save recipient changes before sending email.</p>
             )}
           </form>
           <form
@@ -258,9 +258,9 @@ export default function NotifySettings({ onSessionExpired, embedded = false }) {
               send('broadcast')
             }}
           >
-            <h3>Template & broadcast email</h3>
+            <h3>Email template and broadcast</h3>
             <label className="field" htmlFor="notify-mode">
-              <span>Mode pesan</span>
+              <span>Message mode</span>
               <select
                 id="notify-mode"
                 value={mode}
@@ -270,15 +270,15 @@ export default function NotifySettings({ onSessionExpired, embedded = false }) {
                   setPreview(null)
                 }}
               >
-                <option value="text">Teks biasa</option>
-                <option value="template">Script custom (Go template)</option>
+                <option value="text">Plain text</option>
+                <option value="template">Custom template (Go template)</option>
               </select>
             </label>
             {mode === 'template' && (
               <div className="notify-hint">
                 <p>
-                  Gunakan parameter dan logika Go template. Data mencakup tugas Anda yang belum
-                  selesai; urgent berarti prioritas tinggi.
+                  Use Go template fields and expressions. Data includes your incomplete tasks;
+                  urgent refers to high-priority tasks.
                 </p>
                 <p>
                   <code>
@@ -289,10 +289,10 @@ export default function NotifySettings({ onSessionExpired, embedded = false }) {
                   <code>{'{{range .HighTasks}}- {{.Title}}{{end}}'}</code>
                 </p>
                 <p className="settings-help">
-                  Daftar: .Tasks, .HighTasks, .MediumTasks, .LowTasks (maksimal 100 tugas per
-                  daftar); hitungan mencakup seluruh tugas aktif. Field tugas: .Title, .Priority,
-                  .Category, .DueDate. Mendukung if, range, dan perbandingan seperti gt. Bahasa yang
-                  didukung adalah Go template.
+                  Lists: .Tasks, .HighTasks, .MediumTasks, .LowTasks (up to 100 tasks per list).
+                  Counts include all active tasks. Task fields: .Title, .Priority, .Category,
+                  .DueDate. Supports Go template if conditions, range loops, and comparisons such as
+                  gt.
                 </p>
               </div>
             )}
@@ -303,11 +303,11 @@ export default function NotifySettings({ onSessionExpired, embedded = false }) {
                 disabled={!!busy || !defaultTemplate}
                 onClick={exampleTemplate}
               >
-                Gunakan template tabel bawaan
+                Use the default table template
               </button>
             </div>
             <label className="field" htmlFor="notify-format">
-              <span>Format email</span>
+              <span>Email format</span>
               <select
                 id="notify-format"
                 value={format}
@@ -317,18 +317,18 @@ export default function NotifySettings({ onSessionExpired, embedded = false }) {
                   setPreview(null)
                 }}
               >
-                <option value="text">Teks biasa</option>
-                <option value="html">HTML (tabel & format)</option>
+                <option value="text">Plain text</option>
+                <option value="html">HTML (tables and formatting)</option>
               </select>
             </label>
             {format === 'html' && (
               <p className="muted settings-help">
-                Edit HTML tabel dan parameter sesuai kebutuhan. Gunakan Pratinjau untuk melihat
-                hasilnya.
+                Customize the HTML table and template fields as needed. Select Preview to view the
+                result.
               </p>
             )}
             <label className="field" htmlFor="notify-subject">
-              <span>Subjek</span>
+              <span>Subject</span>
               <input
                 id="notify-subject"
                 value={subject}
@@ -336,12 +336,12 @@ export default function NotifySettings({ onSessionExpired, embedded = false }) {
                 maxLength={160}
                 disabled={!!busy}
                 onChange={(e) => setSubject(e.target.value)}
-                placeholder="Judul email Anda"
+                placeholder="Email subject"
               />
             </label>
 
             <label className="field" htmlFor="notify-body">
-              <span>Pesan</span>
+              <span>Message</span>
               <textarea
                 id="notify-body"
                 rows={7}
@@ -350,12 +350,12 @@ export default function NotifySettings({ onSessionExpired, embedded = false }) {
                 maxLength={10000}
                 disabled={!!busy}
                 onChange={(e) => setBody(e.target.value)}
-                placeholder="Tulis pesan untuk akun email Anda..."
+                placeholder="Enter your email message..."
               />
             </label>
             <p className="muted settings-help">
-              Email tes dan broadcast dikirim ke semua penerima tersimpan. Alamat penerima tidak
-              ditampilkan satu sama lain. Jeda antar pengiriman adalah satu menit.
+              Test emails and broadcasts are sent to all saved recipients. Recipient addresses are
+              hidden from one another. Allow one minute between deliveries.
             </p>
             <div className="notify-actions">
               <button
@@ -364,7 +364,7 @@ export default function NotifySettings({ onSessionExpired, embedded = false }) {
                 disabled={!!busy || !subject.trim() || !body.trim()}
                 onClick={() => templateAction('preview')}
               >
-                Pratinjau
+                Preview
               </button>
               <button
                 type="button"
@@ -372,7 +372,7 @@ export default function NotifySettings({ onSessionExpired, embedded = false }) {
                 disabled={!!busy || dirty || !subject.trim() || !body.trim()}
                 onClick={() => templateAction('schedule')}
               >
-                {busy === 'schedule' ? 'Menyimpan...' : 'Simpan template & jadwal'}
+                {busy === 'schedule' ? 'Saving...' : 'Save template and schedule'}
               </button>
               <button
                 type="submit"
@@ -380,8 +380,8 @@ export default function NotifySettings({ onSessionExpired, embedded = false }) {
                 disabled={!canSend || !subject.trim() || !body.trim()}
               >
                 {busy === 'broadcast'
-                  ? 'Mengirim...'
-                  : `Kirim sekarang ke ${settings.recipients.length} penerima`}
+                  ? 'Sending...'
+                  : `Send now to ${settings.recipients.length} recipients`}
               </button>
             </div>
             {preview && (
@@ -389,7 +389,7 @@ export default function NotifySettings({ onSessionExpired, embedded = false }) {
                 <h3>{preview.subject}</h3>
                 {preview.format === 'html' ? (
                   <iframe
-                    title="Pratinjau tabel email"
+                    title="Email table preview"
                     className="notify-html-preview"
                     sandbox=""
                     referrerPolicy="no-referrer"

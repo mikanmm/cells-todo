@@ -37,19 +37,19 @@ func loadMailConfig() mailConfig {
 
 func (c mailConfig) validate() error {
 	if strings.TrimSpace(c.Password) == "" {
-		return errors.New("Isi SMTP_PASSWORD pada .env server, lalu buat ulang container backend.")
+		return errors.New("Set SMTP_PASSWORD in the server .env file, then recreate the backend container.")
 	}
 	if c.Port != "465" && c.Port != "587" {
-		return errors.New("SMTP_PORT harus 465 (SSL/TLS) atau 587 (STARTTLS).")
+		return errors.New("SMTP_PORT must be 465 (SSL/TLS) or 587 (STARTTLS).")
 	}
 	if strings.TrimSpace(c.Host) == "" || strings.ContainsAny(c.Host, " /:\r\n\t") {
-		return errors.New("SMTP_HOST tidak valid.")
+		return errors.New("Invalid SMTP_HOST.")
 	}
 	if _, err := normalizeRecipients([]string{c.Username}); err != nil {
-		return errors.New("SMTP_USERNAME harus berupa alamat email mailbox yang valid.")
+		return errors.New("SMTP_USERNAME must be a valid mailbox email address.")
 	}
 	if hasControl(c.FromName) || utf8.RuneCountInString(c.FromName) > 100 {
-		return errors.New("SMTP_FROM_NAME tidak valid (maksimal 100 karakter).")
+		return errors.New("Invalid SMTP_FROM_NAME (maximum 100 characters).")
 	}
 	return nil
 }
@@ -60,7 +60,7 @@ func hasControl(value string) bool {
 
 func normalizeRecipients(values []string) ([]string, error) {
 	if len(values) > maxRecipients {
-		return nil, fmt.Errorf("Maksimal %d alamat email per broadcast.", maxRecipients)
+		return nil, fmt.Errorf("A broadcast may have up to %d email recipients.", maxRecipients)
 	}
 	result := []string{}
 	seen := map[string]bool{}
@@ -69,7 +69,7 @@ func normalizeRecipients(values []string) ([]string, error) {
 		address, err := mail.ParseAddress(value)
 		// Keep mailbox input unambiguous, ASCII-only, and safe for SMTP envelopes.
 		if err != nil || address.Address != value || len(value) > 254 || hasControl(value) || strings.ContainsFunc(value, func(r rune) bool { return r > 127 }) {
-			return nil, errors.New("Gunakan alamat email valid tanpa nama tampilan, misalnya user@example.com.")
+			return nil, errors.New("Enter a valid email address without a display name, such as user@example.com.")
 		}
 		key := strings.ToLower(value)
 		if !seen[key] {
@@ -86,10 +86,10 @@ func validateEmailContent(subject, body string, formats ...string) error {
 		limit = 100000
 	}
 	if subject == "" || utf8.RuneCountInString(subject) > 160 || hasControl(subject) {
-		return errors.New("Subjek harus 1–160 karakter tanpa baris baru.")
+		return errors.New("The subject must contain 1–160 characters without line breaks.")
 	}
 	if strings.TrimSpace(body) == "" || utf8.RuneCountInString(body) > limit || strings.ContainsRune(body, 0) {
-		return fmt.Errorf("Pesan harus 1–%d karakter dan tidak boleh berisi karakter NUL.", limit)
+		return fmt.Errorf("The message must contain 1–%d characters and must not contain NUL characters.", limit)
 	}
 	return nil
 }
@@ -131,7 +131,7 @@ func (c mailConfig) send(ctx context.Context, recipients []string, subject, body
 	}
 	validated, err := normalizeRecipients(recipients)
 	if err != nil || len(validated) == 0 {
-		return errors.New("Daftar penerima tidak valid atau kosong.")
+		return errors.New("The recipient list is invalid or empty.")
 	}
 	if err := validateEmailContent(subject, body, formats...); err != nil {
 		return err

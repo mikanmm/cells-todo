@@ -29,8 +29,8 @@ func TestNotifyNextRun(t *testing.T) {
 }
 func TestNotifyCustomTemplate(t *testing.T) {
 	data := notifyTemplateData{Name: "Marcell", Urgent: 3, High: 3, HighTasks: []Todo{{Title: "Deploy"}, {Title: "Review"}}}
-	got, err := renderNotifyTemplate("Halo {{.Name}}, urgent ada {{.Urgent}}.{{range .HighTasks}}\n- {{.Title}}{{end}}", data)
-	if err != nil || got != "Halo Marcell, urgent ada 3.\n- Deploy\n- Review" {
+	got, err := renderNotifyTemplate("Hello {{.Name}}, urgent tasks: {{.Urgent}}.{{range .HighTasks}}\n- {{.Title}}{{end}}", data)
+	if err != nil || got != "Hello Marcell, urgent tasks: 3.\n- Deploy\n- Review" {
 		t.Fatalf("%q %v", got, err)
 	}
 	for _, source := range []string{"{{.Unknown}}", "{{", `{{define "loop"}}{{template "loop" .}}{{end}}{{template "loop" .}}`, "{{range .Tasks}}{{range $.Tasks}}{{end}}{{end}}"} {

@@ -1,7 +1,7 @@
 export const PRIORITY_GROUPS = [
-  { key: 'high', label: 'Tinggi' },
-  { key: 'medium', label: 'Sedang' },
-  { key: 'low', label: 'Rendah' },
+  { key: 'high', label: 'High' },
+  { key: 'medium', label: 'Medium' },
+  { key: 'low', label: 'Low' },
 ]
 
 export function groupTasks(todos, { category = '', filter = 'all', query = '' } = {}) {

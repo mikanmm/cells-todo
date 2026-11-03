@@ -20,12 +20,12 @@ var discordPath = regexp.MustCompile(`^/api(?:/v10)?/webhooks/[0-9]+/[A-Za-z0-9_
 func validateDiscordURL(raw string) error {
 	u, err := url.Parse(raw)
 	if err != nil || u.Scheme != "https" || (u.Host != "discord.com" && u.Host != "discordapp.com") || u.User != nil || u.RawQuery != "" || u.Fragment != "" || !discordPath.MatchString(u.Path) || u.RawPath != "" {
-		return errors.New("Gunakan URL HTTPS webhook Discord: https://discord.com/api/webhooks/ID/TOKEN (channel teks biasa).")
+		return errors.New("Enter an HTTPS Discord webhook URL: https://discord.com/api/webhooks/ID/TOKEN (standard text channel).")
 	}
 	return nil
 }
 func defaultDiscordSchedule() notifySchedule {
-	return notifySchedule{Hour: "08:00", Mode: "template", Format: "text", Subject: "Pengingat tugas", Body: "Halo {{.Name}},\nUrgent: {{.Urgent}} · Sedang: {{.Medium}} · Rendah: {{.Low}}\n{{range .HighTasks}}- {{.Title}}\n{{end}}"}
+	return notifySchedule{Hour: "08:00", Mode: "template", Format: "text", Subject: "Task reminder", Body: "Hello {{.Name}},\nUrgent: {{.Urgent}} · Medium: {{.Medium}} · Low: {{.Low}}\n{{range .HighTasks}}- {{.Title}}\n{{end}}"}
 }
 
 func (a *App) discordSettings(id int64) (string, notifySchedule, sql.NullTime, string, error) {
@@ -53,7 +53,7 @@ func (a *App) handleGetDiscord(w http.ResponseWriter, r *http.Request, u User) {
 }
 func (a *App) discordContent(id int64, s notifySchedule) (string, error) {
 	if s.Format != "" && s.Format != "text" {
-		return "", errors.New("Discord mendukung teks/Markdown, gunakan format teks.")
+		return "", errors.New("Discord supports text and Markdown. Please use text format.")
 	}
 	if err := validateEmailContent(strings.TrimSpace(s.Subject), s.Body); err != nil {
 		return "", err
@@ -63,14 +63,14 @@ func (a *App) discordContent(id int64, s notifySchedule) (string, error) {
 	if s.Mode == "template" {
 		subject, body, err = a.renderNotify(id, subject, body)
 	} else if s.Mode != "text" {
-		return "", errors.New("Mode pesan tidak valid.")
+		return "", errors.New("Invalid message mode.")
 	}
 	if err != nil {
 		return "", err
 	}
 	content := subject + "\n\n" + body
 	if len(utf16.Encode([]rune(content))) > 2000 {
-		return "", errors.New("Hasil judul dan pesan Discord maksimal 2.000 karakter. Ringkas template atau daftar tugas.")
+		return "", errors.New("The combined Discord title and message must not exceed 2,000 characters. Shorten the template or task list.")
 	}
 	return content, nil
 }
@@ -112,7 +112,7 @@ func (a *App) handleSaveDiscord(w http.ResponseWriter, r *http.Request, u User) 
 	}
 	n, _ := res.RowsAffected()
 	if n == 0 {
-		writeError(w, 400, "Isi URL webhook Discord terlebih dahulu.")
+		writeError(w, 400, "Please enter a Discord webhook URL first.")
 		return
 	}
 	a.handleGetDiscord(w, r, u)
@@ -139,20 +139,20 @@ func sendDiscord(ctx context.Context, hook, content string) error {
 	raw, _ := json.Marshal(map[string]any{"content": content, "allowed_mentions": map[string]any{"parse": []string{}}, "flags": 4})
 	req, err := http.NewRequestWithContext(ctx, "POST", hook+"?wait=true", bytes.NewReader(raw))
 	if err != nil {
-		return errors.New("Permintaan Discord tidak valid.")
+		return errors.New("Invalid Discord request.")
 	}
 	req.Header.Set("Content-Type", "application/json")
 	response, err := discordClient.Do(req)
 	if err != nil {
-		return errors.New("Status pengiriman belum pasti. Periksa channel Discord sebelum mengirim ulang.")
+		return errors.New("Delivery status is uncertain. Check the Discord channel before sending again.")
 	}
 	defer response.Body.Close()
 	io.Copy(io.Discard, io.LimitReader(response.Body, 8192))
 	if response.StatusCode == 429 {
-		return errors.New("Discord membatasi pengiriman. Tunggu sebelum mencoba kembali.")
+		return errors.New("Discord has rate-limited delivery. Please wait before trying again.")
 	}
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
-		return errors.New("Discord menolak pesan. Periksa webhook, akses channel, dan panjang pesan.")
+		return errors.New("Discord rejected the message. Check the webhook, channel permissions, and message length.")
 	}
 	return nil
 }
@@ -170,10 +170,10 @@ func (a *App) handleSendDiscord(w http.ResponseWriter, r *http.Request, u User) 
 		return
 	}
 	if hook == "" {
-		writeError(w, 400, "Simpan webhook terlebih dahulu.")
+		writeError(w, 400, "Save the webhook before sending a message.")
 		return
 	}
-	content := "Tes notifikasi Cells\nKoneksi Discord Webhook berhasil."
+	content := "Cells notification test\nThe Discord webhook connection is working."
 	if !in.Test {
 		content, err = a.discordContent(u.ID, in.notifySchedule)
 		if err != nil {
@@ -188,11 +188,11 @@ func (a *App) handleSendDiscord(w http.ResponseWriter, r *http.Request, u User) 
 	}
 	n, _ := res.RowsAffected()
 	if n == 0 {
-		writeError(w, 429, "Tunggu satu menit sebelum mengirim lagi.")
+		writeError(w, 429, "Please wait one minute before sending again.")
 		return
 	}
 	err = sendDiscord(r.Context(), hook, content)
-	status := "Pesan berhasil dikirim ke Discord."
+	status := "Message sent to Discord successfully."
 	if err != nil {
 		status = err.Error()
 	}
@@ -222,7 +222,7 @@ func (a *App) processDiscordSchedule() {
 	if json.Unmarshal(raw, &s) != nil {
 		return
 	}
-	_, err = tx.ExecContext(ctx, `UPDATE notify_discord SET next_run=$2,last_attempt=CURRENT_TIMESTAMP,last_status='Sedang dikirim; jika server terhenti, periksa channel sebelum mengirim ulang.' WHERE user_id=$1`, id, nextNotifyRun(s.Hour, time.Now()))
+	_, err = tx.ExecContext(ctx, `UPDATE notify_discord SET next_run=$2,last_attempt=CURRENT_TIMESTAMP,last_status='Sending; if the server stops, check the channel before sending again.' WHERE user_id=$1`, id, nextNotifyRun(s.Hour, time.Now()))
 	if err != nil {
 		return
 	}
@@ -233,7 +233,7 @@ func (a *App) processDiscordSchedule() {
 	if err == nil {
 		err = sendDiscord(ctx, hook, content)
 	}
-	status := "Pesan terjadwal berhasil dikirim ke Discord."
+	status := "Scheduled message sent to Discord successfully."
 	if err != nil {
 		status = err.Error()
 	}
