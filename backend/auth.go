@@ -35,12 +35,13 @@ type App struct {
 	db        *sql.DB
 	limiter   *loginLimiter
 	dummyHash []byte
+	mail      mailConfig
 }
 
 func newApp(db *sql.DB) *App {
 	// Hash palsu dipakai agar waktu respons login sama, baik username ada maupun tidak.
 	dummy, _ := bcrypt.GenerateFromPassword([]byte("tidak-dipakai"), bcryptCost)
-	return &App{db: db, limiter: newLoginLimiter(8, 10*time.Minute), dummyHash: dummy}
+	return &App{db: db, limiter: newLoginLimiter(8, 10*time.Minute), dummyHash: dummy, mail: loadMailConfig()}
 }
 
 func (a *App) routes() http.Handler {
@@ -51,6 +52,17 @@ func (a *App) routes() http.Handler {
 	mux.HandleFunc("POST /api/login", a.handleLogin)
 	mux.HandleFunc("POST /api/logout", a.handleLogout)
 	mux.HandleFunc("GET /api/me", a.auth(a.handleMe))
+	mux.HandleFunc("GET /api/notify", a.auth(a.handleNotifySettings))
+	mux.HandleFunc("PUT /api/notify", a.auth(a.handleSaveNotifySettings))
+	mux.HandleFunc("POST /api/notify/test", a.auth(a.handleTestEmail))
+	mux.HandleFunc("POST /api/notify/broadcast", a.auth(a.handleBroadcastEmail))
+	mux.HandleFunc("GET /api/notify/schedule", a.auth(a.handleGetSchedule))
+	mux.HandleFunc("PUT /api/notify/schedule", a.auth(a.handleSaveSchedule))
+	mux.HandleFunc("POST /api/notify/preview", a.auth(a.handlePreviewNotify))
+	mux.HandleFunc("GET /api/notify/discord", a.auth(a.handleGetDiscord))
+	mux.HandleFunc("PUT /api/notify/discord", a.auth(a.handleSaveDiscord))
+	mux.HandleFunc("POST /api/notify/discord/send", a.auth(a.handleSendDiscord))
+	mux.HandleFunc("POST /api/notify/discord/preview", a.auth(a.handlePreviewDiscord))
 
 	mux.HandleFunc("DELETE /api/categories/{name}", a.auth(a.handleDeleteCategory))
 	mux.HandleFunc("GET /api/categories", a.auth(a.handleCategories))

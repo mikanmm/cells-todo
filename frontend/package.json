@@ -4,6 +4,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "format": "prettier --write ../ --ignore-path ../.prettierignore --ignore-unknown",
+    "format:check": "prettier --check ../ --ignore-path ../.prettierignore --ignore-unknown",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
@@ -16,6 +18,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
+    "prettier": "3.9.10",
     "vite": "^6.0.0"
   }
 }

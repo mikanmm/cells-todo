@@ -10,7 +10,14 @@ export const PRIORITIES = [
 const EMPTY = { title: '', notes: '', priority: 'medium', category: '', dueDate: '' }
 
 // composer = true: kolom tambah cepat di atas daftar. false: form ubah di dalam kartu tugas.
-export default function TodoForm({ initial, categories = [], composer = false, submitLabel, onSubmit, onCancel }) {
+export default function TodoForm({
+  initial,
+  categories = [],
+  composer = false,
+  submitLabel,
+  onSubmit,
+  onCancel,
+}) {
   const uid = useId()
   const titleRef = useRef(null)
   const [values, setValues] = useState(initial ?? EMPTY)
@@ -18,7 +25,13 @@ export default function TodoForm({ initial, categories = [], composer = false, s
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
-  const set = (key) => (e) => setValues((v) => ({ ...v, [key]: e.target.value }))
+  const set = (key) => (e) => {
+    const value = e.target.value
+    setValues((v) => ({ ...v, [key]: value }))
+    if (key === 'title' && value.trim()) {
+      setError((current) => (current === 'Tulis judul tugas dulu.' ? '' : current))
+    }
+  }
 
   async function submit(e) {
     e.preventDefault()
@@ -124,7 +137,11 @@ export default function TodoForm({ initial, categories = [], composer = false, s
             <span>Kategori</span>
             <select value={values.category} onChange={set('category')}>
               <option value="">Tanpa kategori</option>
-              {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+              {categories.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
             </select>
           </label>
         </div>

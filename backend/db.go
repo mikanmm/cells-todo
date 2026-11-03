@@ -81,6 +81,17 @@ var schema = []string{
 	`INSERT INTO categories SELECT DISTINCT user_id, category FROM todos WHERE category <> '' ON CONFLICT DO NOTHING`,
 	`CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at)`,
 	`CREATE INDEX IF NOT EXISTS idx_todos_user ON todos(user_id, done)`,
+	`CREATE TABLE IF NOT EXISTS notify_settings (
+		user_id BIGINT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+		recipients JSONB NOT NULL DEFAULT '[]'::jsonb
+	)`,
+	`CREATE TABLE IF NOT EXISTS notify_mail_state (
+		id INTEGER PRIMARY KEY CHECK (id = 1),
+		last_attempt_at TIMESTAMPTZ
+	)`,
+	`INSERT INTO notify_mail_state(id) VALUES (1) ON CONFLICT DO NOTHING`,
+	`CREATE TABLE IF NOT EXISTS notify_schedule (user_id BIGINT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, config JSONB NOT NULL, next_run TIMESTAMPTZ, last_run TIMESTAMPTZ, last_status TEXT NOT NULL DEFAULT '')`,
+	`CREATE TABLE IF NOT EXISTS notify_discord (user_id BIGINT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, webhook TEXT NOT NULL, config JSONB NOT NULL, next_run TIMESTAMPTZ, last_attempt TIMESTAMPTZ, last_status TEXT NOT NULL DEFAULT '')`,
 }
 
 func migrate(db *sql.DB) error {

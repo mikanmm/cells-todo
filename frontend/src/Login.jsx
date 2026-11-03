@@ -71,7 +71,9 @@ export default function Login({ onLogin }) {
           </button>
         </form>
 
-        <p className="login-note">Akun dibuat oleh admin. Belum punya akun? Minta admin membuatkannya.</p>
+        <p className="login-note">
+          Akun dibuat oleh admin. Belum punya akun? Minta admin membuatkannya.
+        </p>
       </section>
     </main>
   )

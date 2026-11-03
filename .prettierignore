@@ -1,0 +1,9 @@
+.git/
+**/node_modules/
+**/dist/
+**/.cache/
+**/coverage/
+.env
+.env.*
+**/package-lock.json
+**/go.sum

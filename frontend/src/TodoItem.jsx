@@ -23,7 +23,9 @@ export default function TodoItem({ todo, onToggle, onEdit, onDelete }) {
         <p className="task-title">{todo.title}</p>
         {todo.notes && <p className="task-notes">{todo.notes}</p>}
         <p className="task-meta">
-          <span className={`prio prio-${todo.priority}`}>Prioritas {PRIORITY_LABEL[todo.priority].toLowerCase()}</span>
+          <span className={`prio prio-${todo.priority}`}>
+            Prioritas {PRIORITY_LABEL[todo.priority].toLowerCase()}
+          </span>
           {todo.dueDate && (
             <span className={`due ${overdue ? 'is-overdue' : ''}`}>
               <span className="visually-hidden">Tenggat: </span>

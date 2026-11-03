@@ -56,13 +56,14 @@ func runServe() {
 
 	app := newApp(db)
 	go app.cleanupSessions()
+	go app.runNotifyScheduler()
 
 	srv := &http.Server{
 		Addr:              ":" + env("PORT", "8081"),
 		Handler:           app.routes(),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       15 * time.Second,
-		WriteTimeout:      15 * time.Second,
+		WriteTimeout:      30 * time.Second,
 		IdleTimeout:       60 * time.Second,
 	}
 

@@ -25,8 +25,10 @@ export default function App() {
 
   useEffect(() => {
     if (user === undefined) return
-    if (user === null && window.location.pathname !== '/login') window.history.replaceState(null, '', '/login')
-    if (user && ['/login', '/'].includes(window.location.pathname)) window.history.replaceState(null, '', '/dashboard')
+    if (user === null && window.location.pathname !== '/login')
+      window.history.replaceState(null, '', '/login')
+    if (user && ['/login', '/'].includes(window.location.pathname))
+      window.history.replaceState(null, '', '/dashboard')
   }, [user])
 
   return (
