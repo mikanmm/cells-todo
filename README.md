@@ -1,95 +1,67 @@
 # Cells
 
-Aplikasi daftar tugas dengan pengingat melalui email dan Discord, menggunakan React, Go, dan PostgreSQL.
+**Daftar tugas pribadi dengan pengingat lewat email dan Discord.**
 
-## Fungsi aplikasi
+Cells membantu Anda mencatat pekerjaan, menentukan mana yang perlu didahulukan, dan memantau tugas yang sudah selesai. Tugas ditampilkan berdasarkan prioritas agar pekerjaan penting lebih mudah ditemukan.
 
-- Menambah, mengubah, menghapus, dan menandai tugas selesai.
-- Mengatur kategori, prioritas, catatan, dan tanggal jatuh tempo.
-- Mencari serta memfilter tugas dan melihat progres penyelesaian.
-- Menyimpan tugas dan pengaturan secara terpisah untuk setiap akun.
-- Mengirim pengingat melalui email atau Discord Webhook, secara manual maupun terjadwal setiap hari dalam zona WIB.
-- Mengatur template pesan, melihat pratinjau, dan mengirim pesan tes. Email mendukung teks biasa dan HTML.
-- Menyimpan beberapa penerima email dengan pemisah `;`, misalnya `123@gmail.com; 234@gmail.com`.
+Cocok untuk mengelola pekerjaan harian, tugas kuliah, atau rencana pribadi. Anda dapat menjalankan Cells di komputer atau server sendiri, lalu mengaksesnya melalui browser.
 
-## Cara menjalankan
+## Apa yang bisa dilakukan?
 
-Siapkan Docker dengan Docker Compose. Di Windows, jalankan Docker Desktop terlebih dahulu.
-Buka terminal di folder proyek.
+### Mengatur tugas harian
 
-### 1. Siapkan konfigurasi
+Buat tugas dengan judul, catatan, kategori, prioritas, dan tanggal jatuh tempo. Ubah detailnya saat rencana berubah, tandai selesai setelah dikerjakan, atau hapus tugas yang tidak diperlukan.
 
-Salin `.env.example` menjadi `.env`. Jika `.env` sudah ada, gunakan file tersebut.
+### Menentukan fokus
 
-Windows (CMD atau PowerShell):
+Tugas dikelompokkan menjadi prioritas tinggi, sedang, dan rendah. Pencarian dan filter kategori membantu menemukan pekerjaan tertentu, sementara penanda keterlambatan dan progres penyelesaian membantu memantau pekerjaan yang masih tersisa.
 
-```text
-copy .env.example .env
-```
+### Mendapat pengingat
 
-Linux atau macOS:
+Kirim ringkasan tugas aktif melalui email atau ke channel Discord menggunakan webhook. Pengiriman dapat dilakukan langsung atau dijadwalkan setiap hari pada jam pilihan Anda dalam zona WIB.
 
-```bash
-cp .env.example .env
-```
+Email mendukung beberapa penerima, teks biasa, dan HTML. Pesan Discord mendukung teks dan Markdown. Masing-masing memiliki pengaturan pesan serta jadwal sendiri.
 
-Isi `DB_PASSWORD` di `.env`. `WEB_PORT` menentukan port aplikasi, dengan nilai awal `8080`.
+### Menyesuaikan pesan
 
-### 2. Jalankan aplikasi
+Gunakan pesan biasa atau template yang mengambil informasi dari tugas, seperti nama pengguna, jumlah tugas aktif, dan daftar tugas berdasarkan prioritas. Tersedia pratinjau dan pengiriman tes untuk memeriksa pesan sebelum digunakan. Untuk email, tersedia juga template tabel bawaan.
+
+### Memisahkan data setiap akun
+
+Setiap akun memiliki tugas, kategori, dan pengaturan notifikasinya sendiri. Satu instalasi dapat digunakan oleh beberapa akun dengan daftar tugas masing-masing.
+
+## Contoh penggunaan
+
+Mulai hari dengan mencatat pekerjaan dan memberi prioritas pada tugas yang paling penting. Tambahkan kategori seperti **Kuliah**, **Kerja**, atau **Pribadi**, lalu tentukan tanggal jatuh temponya. Setelah selesai, tandai tugas tersebut untuk memperbarui progres.
+
+Jika ingin pengingat rutin, buka **Setting → Notify**, pilih email atau Discord, lalu simpan pesan dan jadwal pengiriman. Misalnya, kirim ringkasan tugas aktif setiap pukul **08:00 WIB**. Server harus tetap berjalan agar pengingat terjadwal dapat dikirim.
+
+## Menjalankan sendiri
+
+Cells menggunakan React, Go, dan PostgreSQL. Cara menjalankan yang disediakan adalah melalui Docker Compose.
+
+1. Siapkan Docker dan Docker Compose; di Windows, jalankan Docker Desktop.
+2. Salin `.env.example` menjadi `.env`, lalu isi `DB_PASSWORD`.
+3. Jalankan perintah berikut dari folder proyek:
 
 ```bash
 docker compose up -d --build
 ```
 
-Buka [http://localhost:8080](http://localhost:8080), atau sesuaikan dengan `WEB_PORT`.
-Saat pertama dijalankan, aplikasi membuat akun dengan username **admin** dan password **admin**.
-
-Ganti password akun awal dengan password pilihan Anda, minimal 8 karakter:
+Buka [http://localhost:8080](http://localhost:8080). Akun awal menggunakan username **admin** dan password **admin**. Ganti password dengan pilihan Anda, minimal 8 karakter:
 
 ```bash
 docker compose exec backend /app/server passwd admin "passwordBaruAnda"
 ```
 
-Untuk membuat akun tambahan:
+Untuk email, isi konfigurasi SMTP pada `.env`, lalu jalankan `docker compose up -d backend`. Atur penerima di menu Notify dengan pemisah `;`, misalnya `123@gmail.com; 234@gmail.com`. Untuk Discord, simpan URL webhook melalui panel Discord di menu yang sama.
+
+### Akses melalui Cloudflare Tunnel
+
+Branch `cloudflare` menyediakan Compose tambahan untuk akses melalui `todo.mikanm.me`. Isi `CLOUDFLARE_TUNNEL_TOKEN` di `.env` dan arahkan rute hostname tersebut ke service `http://web:80` pada dashboard Cloudflare, lalu jalankan:
 
 ```bash
-docker compose exec backend /app/server adduser budi "passwordAnda123" "Budi Santoso"
+docker compose -f docker-compose.yml -f docker-compose.cloudflare.yml up -d --build
 ```
 
-### 3. Aktifkan notifikasi bila diperlukan
-
-Untuk email, isi `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, dan `SMTP_FROM_NAME` di `.env` sesuai mailbox Anda. `NOTIFY_RECIPIENTS` menentukan penerima awal. Contoh konfigurasi tersedia di `.env.example`.
-
-Terapkan perubahan konfigurasi:
-
-```bash
-docker compose up -d backend
-```
-
-Buka **Setting → Notify → Notify By Mail**, isi penerima dengan pemisah `;`, lalu simpan. Atur pesan dan jadwal, atau gunakan tombol kirim tes.
-
-Untuk Discord, buat webhook melalui **Pengaturan channel → Integrations → Webhooks**. Masukkan URL di **Setting → Notify → Notify By Discord Webhook**, lalu simpan dan kirim tes.
-
-Server harus tetap berjalan agar pengingat terjadwal dapat dikirim.
-
-### Memperbarui kode dan menghentikan aplikasi
-
-Setelah mengubah frontend:
-
-```bash
-docker compose up -d --build --no-deps web
-```
-
-Setelah mengubah backend:
-
-```bash
-docker compose up -d --build backend
-```
-
-Untuk menghentikan aplikasi:
-
-```bash
-docker compose down
-```
-
-Data tetap tersimpan di volume database selama volume tersebut tidak dihapus.
+Data aplikasi disimpan di volume PostgreSQL. File `.env` berisi konfigurasi pribadi dan tidak ikut disimpan di Git.
