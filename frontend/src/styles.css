@@ -480,6 +480,69 @@ p {
   grid-column: 1 / -1;
 }
 
+.due-repeat {
+  min-width: 0;
+}
+.repeat-days {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.repeat-day {
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.repeat-day.on {
+  background: rgba(21, 122, 139, 0.1);
+  border-color: var(--teal);
+}
+.repeat-day:has(input:disabled) {
+  cursor: default;
+}
+.repeat-day:focus-within,
+.notify-toggle:focus-within .toggle-track {
+  outline: 2px solid var(--teal);
+  outline-offset: 3px;
+}
+.notify-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  position: relative;
+}
+.notify-toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+.toggle-track {
+  width: 38px;
+  height: 22px;
+  background: #87959b;
+  border-radius: 20px;
+  padding: 3px;
+  transition: background 150ms;
+}
+.toggle-track::after {
+  content: '';
+  display: block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: white;
+  transition: transform 150ms;
+}
+.notify-toggle input:checked + .toggle-track {
+  background: var(--teal);
+}
+.notify-toggle input:checked + .toggle-track::after {
+  transform: translateX(16px);
+}
+
 .segmented {
   display: flex;
   flex-wrap: wrap;

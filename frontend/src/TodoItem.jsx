@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { dayDiff, dueLabel } from './dates.js'
 import { GemCheck } from './Gem.jsx'
+import { REPEAT_DAYS } from './TodoForm.jsx'
 
 const PRIORITY_LABEL = { low: 'Low', medium: 'Medium', high: 'High' }
 
@@ -33,6 +34,17 @@ export default function TodoItem({ todo, onToggle, onEdit, onDelete }) {
             </span>
           )}
           {todo.category && <span className="chip">{todo.category}</span>}
+          {todo.repeatType && todo.repeatType !== 'none' && (
+            <span className="chip">
+              Repeat:{' '}
+              {todo.repeatType === 'weekdays'
+                ? '5 Days'
+                : todo.repeatType === 'daily'
+                  ? '7 Days'
+                  : todo.repeatDays.map((day) => REPEAT_DAYS[day - 1].slice(0, 3)).join(', ')}
+            </span>
+          )}
+          {todo.notify && <span className="chip">Notify on</span>}
         </p>
       </div>
 

@@ -12,6 +12,8 @@ Use Cells to manage daily work, coursework, or personal plans. Host it on your o
 
 Create tasks with a title, notes, category, priority, and due date. Update the details as your plans change, mark tasks as completed, or delete tasks you no longer need.
 
+Below the due date, choose **Repeat**: **5 Days** (Monday–Friday), **7 Days** (every day), or **Custom days**. Presets lock their selected days. Completed tasks reopen on the next selected day in Asia/Jakarta, once their due date has arrived, and receive that day's due date. Incomplete tasks stay open; missed occurrences do not create duplicates. Refresh the list to see tasks reopened by the server.
+
 ### Focus on priorities
 
 Tasks are grouped into high, medium, and low priorities. Search and category filters help you locate specific items, while overdue indicators and completion progress show what remains to be done.
@@ -19,6 +21,8 @@ Tasks are grouped into high, medium, and low priorities. Search and category fil
 ### Receive reminders
 
 Send summaries of active tasks by email or to a Discord channel through a webhook. Send messages immediately or schedule daily delivery at a selected time in the Asia/Jakarta time zone (WIB, UTC+7).
+
+Enable the **Notify** switch on each task to include it in notification templates and totals. It defaults to off, including for existing tasks. Only incomplete tasks with Notify enabled are included; plain messages and test messages do not use task data.
 
 Email supports multiple recipients, plain text, and HTML. Discord messages support text and Markdown. Each channel has its own message and schedule settings.
 

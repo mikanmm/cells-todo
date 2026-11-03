@@ -77,6 +77,9 @@ var schema = []string{
 		updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		CONSTRAINT fk_todos_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 	)`,
+	`ALTER TABLE todos ADD COLUMN IF NOT EXISTS repeat_type TEXT NOT NULL DEFAULT 'none' CHECK (repeat_type IN ('none', 'weekdays', 'daily', 'custom'))`,
+	`ALTER TABLE todos ADD COLUMN IF NOT EXISTS repeat_days INTEGER[] NOT NULL DEFAULT '{}'`,
+	`ALTER TABLE todos ADD COLUMN IF NOT EXISTS notify BOOLEAN NOT NULL DEFAULT FALSE`,
 	`CREATE TABLE IF NOT EXISTS categories (user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE, name VARCHAR(40) NOT NULL, PRIMARY KEY(user_id, name))`,
 	`INSERT INTO categories SELECT DISTINCT user_id, category FROM todos WHERE category <> '' ON CONFLICT DO NOTHING`,
 	`CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at)`,

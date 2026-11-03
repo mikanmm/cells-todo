@@ -209,7 +209,7 @@ export default function DiscordNotifySettings({ onSessionExpired }) {
         </label>
         {config.mode === 'template' && (
           <div className="notify-hint">
-            <p>Use the following fields from your active tasks:</p>
+            <p>Use the following fields from active tasks with Notify enabled:</p>
             <code>{'{{.Name}} {{.Date}} {{.Total}} {{.Urgent}} {{.Medium}} {{.Low}}'}</code>
             <p>
               <code>{'{{range .HighTasks}}- {{.Title}}{{end}}'}</code>

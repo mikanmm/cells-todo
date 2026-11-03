@@ -290,9 +290,9 @@ export default function NotifySettings({ onSessionExpired, embedded = false }) {
                 </p>
                 <p className="settings-help">
                   Lists: .Tasks, .HighTasks, .MediumTasks, .LowTasks (up to 100 tasks per list).
-                  Counts include all active tasks. Task fields: .Title, .Priority, .Category,
-                  .DueDate. Supports Go template if conditions, range loops, and comparisons such as
-                  gt.
+                  Counts include active tasks with Notify enabled. Task fields: .Title, .Priority,
+                  .Category, .DueDate. Supports Go template if conditions, range loops, and
+                  comparisons such as gt.
                 </p>
               </div>
             )}
