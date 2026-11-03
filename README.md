@@ -72,6 +72,41 @@ Untuk Discord, buat webhook melalui **Pengaturan channel → Integrations → We
 
 Server harus tetap berjalan agar pengingat terjadwal dapat dikirim.
 
+### 4. Jalankan melalui Cloudflare Tunnel (opsional)
+
+Untuk membuka aplikasi melalui `https://todo.mikanm.me`, buat Cloudflare Tunnel di dashboard Cloudflare, lalu salin token konektornya ke `.env`:
+
+```dotenv
+CLOUDFLARE_TUNNEL_TOKEN=isi-token-tunnel-anda
+```
+
+Tambahkan published application route pada tunnel tersebut:
+
+- Hostname: `todo.mikanm.me` (subdomain `todo`, domain `mikanm.me`).
+- Service: **HTTP**, URL **`web:80`**.
+
+Alamat tujuan lengkapnya `http://web:80`, yaitu service web di jaringan Docker yang sama. Pastikan password akun awal sudah diganti sebelum membuka akses publik.
+
+Jalankan aplikasi beserta tunnel:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.cloudflare.yml up -d --build
+```
+
+Lihat status koneksi tunnel:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.cloudflare.yml logs --tail=50 cloudflared
+```
+
+Setelah mengganti token di `.env`, jalankan kembali perintah `up -d` dengan kedua file Compose. Untuk menghentikan aplikasi beserta tunnel:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.cloudflare.yml down
+```
+
+Token hanya disimpan di `.env`, yang sudah diabaikan Git. Cara membuat tunnel dan rute tersedia di [panduan Cloudflare](https://developers.cloudflare.com/tunnel/get-started/).
+
 ### Memperbarui kode dan menghentikan aplikasi
 
 Setelah mengubah frontend:
