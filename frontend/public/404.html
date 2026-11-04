@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/snow.css">
+    <script src="/theme.js"></script>
+    <title>404 · Page not found · Cells</title>
+    <link rel="icon" href="/favicon.svg">
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        min-height: 100svh;
+        display: grid;
+        place-items: center;
+        padding: 20px;
+        background: url("/crystal-facets.svg") center / cover no-repeat,
+          linear-gradient(135deg, #eaf8fb, #f3f1ff 58%, #fdf2f7);
+        color: #1b3446;
+        font: 1rem/1.55 system-ui, sans-serif;
+      }
+      main {
+        width: min(100%, 29rem);
+        padding: clamp(26px, 6vw, 48px);
+        border: 1px solid white;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, .74);
+        box-shadow: 0 16px 50px -22px #59869c55;
+        text-align: center;
+      }
+      .brand { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; }
+      .code {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: .02em;
+        margin: 24px 0 16px;
+        font-size: clamp(5rem, 18vw, 8rem);
+        font-weight: 750;
+        line-height: 1;
+        color: #326b80;
+      }
+      .code img { width: .76em; filter: drop-shadow(0 6px 6px #7474ac25); }
+      h1 { margin: 0; font-size: clamp(1.7rem, 6vw, 2.25rem); letter-spacing: -.04em; line-height: 1.15; }
+      p { margin: 12px auto 24px; color: #46636f; }
+      a { display: inline-flex; align-items: center; gap: 10px; padding: 11px 20px; border-radius: 10px; background: #106d7d; color: white; font-weight: 650; text-decoration: none; }
+      a:hover { background: #0f5f6e; }
+      a:focus-visible { outline: 3px solid #157a8b; outline-offset: 4px; }
+      html[data-theme="dark"] body { color: #e0f2ff; background: linear-gradient(#0e2036cb, #221f39d9), url("/crystal-facets.svg") center / cover, #36556a; }
+      html[data-theme="dark"] main { background: #15263de8; border-color: #48617a; }
+      html[data-theme="dark"] .code, html[data-theme="dark"] p { color: #a8dce2; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="brand"><img src="/favicon.svg" width="22" height="22" alt="">Cells</div>
+      <div class="code" aria-hidden="true">4<img src="/favicon.svg" alt="">4</div>
+      <h1>Page not found</h1>
+      <p>Check the address or head back to your task list.</p>
+      <a href="/"><span aria-hidden="true">&larr;</span> Back to Cells</a>
+    </main>
+  </body>
+</html>

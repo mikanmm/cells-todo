@@ -1,3 +1,5 @@
+import { useId } from 'react'
+
 // Faceted gem: six surfaces that can crystallize individually.
 const FACETS = [
   { points: '7,3 21,3 17,11 11,11', alpha: 0.55 }, // table
@@ -62,10 +64,28 @@ export function GemCheck({ priority, done, label, onToggle }) {
   )
 }
 
-// Progress gem: filled facets represent the proportion of completed tasks.
+// A continuous fill keeps the diamond intact at every completion level.
 export function ProgressGem({ done, total }) {
-  const filled = total === 0 ? 0 : done === total ? 6 : Math.min(5, Math.floor((done / total) * 6))
-  return <GemSvg tone="var(--teal)" filled={filled} size={112} className="gem-progress" />
+  const fillId = useId()
+  const fraction = total > 0 ? Math.min(1, Math.max(0, done / total)) : 0
+  return (
+    <svg className="gem-progress" viewBox="0 0 28 28" width="112" height="112" aria-hidden="true">
+      <defs>
+        <linearGradient id={fillId} gradientUnits="userSpaceOnUse" x1="1" y1="0" x2="27" y2="0">
+          <stop offset={fraction} stopColor="var(--teal)" />
+          <stop offset={fraction} stopColor="var(--glacier)" />
+        </linearGradient>
+      </defs>
+      <path d="M7 3H21L27 11L14 26L1 11Z" fill={`url(#${fillId})`} />
+      {FACETS.map(({ points, alpha }) => (
+        <polygon key={points} points={points} fill="white" fillOpacity={(1 - alpha) * 0.7} />
+      ))}
+      <g fill="none" strokeLinejoin="round">
+        <path d="M1 11H27M7 3L11 11L14 26L17 11L21 3" stroke="var(--teal-deep)" strokeOpacity=".55" strokeWidth=".38" />
+        <path d="M7 3H21L27 11L14 26L1 11Z" stroke="var(--teal-deep)" strokeWidth=".65" />
+      </g>
+    </svg>
+  )
 }
 
 // Static decoration for the sign-in page.

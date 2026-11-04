@@ -1,3 +1,9 @@
+import { todayStr } from './dates.js'
+
+export function isOverdue(todo, today = todayStr()) {
+  return !todo.done && !!todo.dueDate && todo.dueDate < today
+}
+
 export const PRIORITY_GROUPS = [
   { key: 'high', label: 'High' },
   { key: 'medium', label: 'Medium' },
@@ -9,7 +15,7 @@ export function groupTasks(todos, { category = '', filter = 'all', query = '' } 
   const visible = todos.filter(
     (todo) =>
       (!category || todo.category === category) &&
-      (filter === 'done' ? todo.done : !todo.done) &&
+      (filter === 'overdue' ? isOverdue(todo) : todo.done === (filter === 'done')) &&
       `${todo.title} ${todo.notes}`.toLowerCase().includes(search),
   )
   return PRIORITY_GROUPS.map((group) => ({

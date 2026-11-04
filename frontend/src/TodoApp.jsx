@@ -5,10 +5,11 @@ import CategorySettings from './CategorySettings.jsx'
 import NotifySettings from './NotifyHub.jsx'
 import TodoForm from './TodoForm.jsx'
 import TodoItem from './TodoItem.jsx'
-import { groupTasks } from './taskGroups.js'
+import { groupTasks, isOverdue } from './taskGroups.js'
 import { ProgressGem } from './Gem.jsx'
-import { dayDiff, todayLong } from './dates.js'
+import { todayStr, todayLong } from './dates.js'
 export default function TodoApp({ user, onLogout, onSessionExpired }) {
+  const [dark, setDark] = useState(() => document.documentElement.dataset.theme === 'dark')
   const [todos, setTodos] = useState([]),
     [categories, setCategories] = useState([]),
     [error, setError] = useState(''),
@@ -52,6 +53,23 @@ export default function TodoApp({ user, onLogout, onSessionExpired }) {
   useEffect(() => {
     load()
   }, [])
+  const [today, setToday] = useState(todayStr)
+  useEffect(() => {
+    const refreshDate = () => setToday(todayStr())
+    const timer = window.setInterval(refreshDate, 30000)
+    window.addEventListener('focus', refreshDate)
+    return () => {
+      window.clearInterval(timer)
+      window.removeEventListener('focus', refreshDate)
+    }
+  }, [])
+  const overdueCount = todos.filter(t => isOverdue(t, today)).length
+  const completedCount = todos.filter(t => t.done).length
+  const activeCount = todos.length - completedCount
+  const counts = { all: activeCount, active: activeCount, done: completedCount, overdue: overdueCount }
+  useEffect(() => {
+    if (!overdueCount && filter === 'overdue') setFilter('all')
+  }, [overdueCount, filter])
   const groups = groupTasks(todos, { category, filter, query })
   async function toggle(t) {
     if (!t.done) {
@@ -114,6 +132,17 @@ export default function TodoApp({ user, onLogout, onSessionExpired }) {
           </div>
           <p className="muted">{todayLong()}</p>
         </div>
+        <div className="topbar-actions">
+          <label className="notify-toggle">
+            <input type="checkbox" role="switch" checked={dark} onChange={e => {
+              const enabled = e.target.checked
+              setDark(enabled)
+              document.documentElement.dataset.theme = enabled ? 'dark' : 'light'
+              try { localStorage.setItem('cells-dark', String(enabled)) } catch {}
+            }} />
+            <span className="toggle-track" aria-hidden="true" />
+            Dark mode
+          </label>
         <button
           type="button"
           className="btn btn-ghost"
@@ -121,6 +150,7 @@ export default function TodoApp({ user, onLogout, onSessionExpired }) {
         >
           {settings ? 'Home' : 'Sign out'}
         </button>
+        </div>
       </header>
       <aside className="side">
         {!settings && (
@@ -136,9 +166,9 @@ export default function TodoApp({ user, onLogout, onSessionExpired }) {
                 'No tasks yet'
               )}
             </p>
-            {todos.some((t) => !t.done && t.dueDate && dayDiff(t.dueDate) < 0) && (
+            {overdueCount > 0 && (
               <p className="overdue-note">
-                {todos.filter((t) => !t.done && t.dueDate && dayDiff(t.dueDate) < 0).length} overdue
+                {overdueCount} overdue
                 tasks
               </p>
             )}
@@ -173,7 +203,7 @@ export default function TodoApp({ user, onLogout, onSessionExpired }) {
             <>
               {/*<div className="priority-order"><span>Priority order</span><strong>High → Medium → Low</strong></div>*/}
               <ul className="filter-list">
-                {['all', 'active', 'done'].map((v) => (
+                {Object.keys(counts).filter(v => v !== 'overdue' || overdueCount > 0).map((v) => (
                   <li key={v}>
                     <button
                       type="button"
@@ -182,10 +212,10 @@ export default function TodoApp({ user, onLogout, onSessionExpired }) {
                       onClick={() => setFilter(v)}
                     >
                       <span>
-                        {{ all: 'All tasks', active: 'Incomplete', done: 'Completed' }[v]}
+                        {{ all: 'All tasks', active: 'Incomplete', done: 'Completed', overdue: 'Overdue' }[v]}
                       </span>
                       <span className="count">
-                        {todos.filter((t) => (v === 'done' ? t.done : !t.done)).length}
+                        {counts[v]}
                       </span>
                     </button>
                   </li>

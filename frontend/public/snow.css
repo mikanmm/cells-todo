@@ -1,0 +1,31 @@
+/* Two sparse layers drift behind the crystal cards. */
+/*@media (prefers-reduced-motion: no-preference) {
+  html[data-theme="dark"] body { isolation: isolate; }
+  html[data-theme="dark"] body::before,
+  html[data-theme="dark"] body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+      radial-gradient(circle at 8% 14%, #ebfaff99 1px, transparent 2px),
+      radial-gradient(circle at 46% 79%, #ebfaff70 1px, transparent 1.8px),
+      radial-gradient(circle at 91% 43%, #ebfaff88 1.5px, transparent 2.3px);
+    background-size: 100% 100vh;
+    animation: cells-snowfall 27s linear infinite;
+  }
+  html[data-theme="dark"] body::after {
+    background-image:
+      radial-gradient(circle at 22% 66%, #ebfaff70 1px, transparent 2px),
+      radial-gradient(circle at 76% 31%, #ebfaff88 1px, transparent 2px);
+    animation-duration: 36s;
+    animation-delay: -13s;
+  }
+  @keyframes cells-snowfall {
+    0% { background-position: 0 0; }
+    50% { background-position: 12px 50vh; }
+    100% { background-position: 0 100vh; }
+  }
+}
+*/

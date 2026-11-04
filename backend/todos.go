@@ -151,6 +151,10 @@ func (a *App) handleCreateTodo(w http.ResponseWriter, r *http.Request, u User) {
 		return
 	}
 
+	if in.DueDate != "" && in.DueDate < time.Now().In(jakarta()).Format("2006-01-02") {
+		writeError(w, http.StatusBadRequest, "Choose today or a future due date.")
+		return
+	}
 	var id int64
 	err := a.db.QueryRow(
 		`INSERT INTO todos (user_id, title, notes, priority, category, due_date, repeat_type, repeat_days, notify) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
@@ -184,6 +188,22 @@ func (a *App) handleUpdateTodo(w http.ResponseWriter, r *http.Request, u User) {
 		return
 	}
 
+	if in.DueDate != "" && in.DueDate < time.Now().In(jakarta()).Format("2006-01-02") {
+		var unchanged bool
+		err := a.db.QueryRow(`SELECT coalesce(due_date = $3::date,false) FROM todos WHERE id=$1 AND user_id=$2`, id, u.ID, in.DueDate).Scan(&unchanged)
+		if errors.Is(err, sql.ErrNoRows) {
+			writeError(w, 404, "Task not found.")
+			return
+		}
+		if err != nil {
+			serverError(w, "check due date", err)
+			return
+		}
+		if !unchanged {
+			writeError(w, 400, "Choose today or a future due date.")
+			return
+		}
+	}
 	res, err := a.db.Exec(
 		`UPDATE todos SET updated_at = CURRENT_TIMESTAMP, title = $1, notes = $2, priority = $3, category = $4, due_date = $5, repeat_type = $8, repeat_days = $9, notify = $10 WHERE id = $6 AND user_id = $7`,
 		in.Title, in.Notes, in.Priority, in.Category, due, id, u.ID, in.RepeatType, in.RepeatDays, in.Notify,

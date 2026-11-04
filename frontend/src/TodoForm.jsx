@@ -1,4 +1,5 @@
 import { useId, useRef, useState } from 'react'
+import { todayStr } from './dates.js'
 import { GemDot } from './Gem.jsx'
 
 export const PRIORITIES = [
@@ -61,6 +62,10 @@ export default function TodoForm({
     }
     if (values.repeatType === 'custom' && values.repeatDays.length === 0) {
       setError('Select at least one repeat day.')
+      return
+    }
+    if (values.dueDate && values.dueDate !== initial?.dueDate && values.dueDate < todayStr()) {
+      setError('Choose today or a future due date.')
       return
     }
     setBusy(true)
@@ -164,7 +169,7 @@ export default function TodoForm({
           <div className="field due-repeat">
             <label className="field">
               <span>Due date</span>
-              <input type="date" value={values.dueDate} onChange={set('dueDate')} />
+              <input type="date" min={todayStr()} value={values.dueDate} onChange={set('dueDate')} />
             </label>
             <label className="field">
               <span>Repeat</span>
