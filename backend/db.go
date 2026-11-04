@@ -46,6 +46,7 @@ func openDB() (*sql.DB, error) {
 }
 
 var schema = []string{
+	`CREATE TABLE IF NOT EXISTS registration_codes (email TEXT PRIMARY KEY, digest TEXT NOT NULL, issued TIMESTAMPTZ NOT NULL DEFAULT now(), attempts INTEGER NOT NULL DEFAULT 0)`,
 
 	`CREATE TABLE IF NOT EXISTS users (
 		id            BIGSERIAL PRIMARY KEY,
@@ -55,6 +56,16 @@ var schema = []string{
 		created_at    TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 	)`,
 
+	`CREATE UNIQUE INDEX IF NOT EXISTS users_username_lower_key ON users (lower(username))`,
+	`ALTER TABLE users ADD COLUMN IF NOT EXISTS verified_email TEXT UNIQUE`,
+	`CREATE OR REPLACE FUNCTION registration_mailbox(address text) RETURNS text
+     LANGUAGE sql IMMUTABLE STRICT AS $$
+       SELECT CASE WHEN lower(address) ~ '@(gmail|googlemail)[.]com$'
+         THEN replace(split_part(split_part(lower(address), '@', 1), '+', 1), '.', '') || '@gmail.com'
+         ELSE lower(address) END
+     $$`,
+	`CREATE UNIQUE INDEX IF NOT EXISTS users_registration_mailbox_key
+     ON users (registration_mailbox(verified_email))`,
 	`CREATE TABLE IF NOT EXISTS sessions (
 		token_hash CHAR(64) NOT NULL PRIMARY KEY,
 		user_id    BIGINT NOT NULL,
@@ -107,6 +118,6 @@ func migrate(db *sql.DB) error {
 	if err != nil {
 		return err
 	}
-	_, err = db.Exec(`INSERT INTO users (username, display_name, password_hash) VALUES ('admin', 'Admin', $1) ON CONFLICT (username) DO NOTHING`, string(hash))
+	_, err = db.Exec(`INSERT INTO users (username, display_name, password_hash) VALUES ('admin', 'Admin', $1) ON CONFLICT DO NOTHING`, string(hash))
 	return err
 }

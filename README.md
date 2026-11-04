@@ -32,7 +32,7 @@ Use plain messages or templates that include task information, such as your name
 
 ### Keep accounts separate
 
-Each account has its own tasks, categories, and notification settings. Multiple accounts can use the same installation with separate task lists.
+Each account has its own tasks, categories, and notification settings. Multiple accounts can use the same installation with separate task lists. Choose **Create an account** on the sign-in page, enter a unique username and a password of at least eight characters, then sign in. New accounts start with an empty task list.
 
 Sign-in sessions expire after six hours. Users must then sign in again; activity and page refreshes do not extend the session.
 

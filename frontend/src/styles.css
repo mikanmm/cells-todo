@@ -250,12 +250,11 @@ p {
 
 .login-form {
   display: grid;
-  gap: 14px;
-  margin-top: 22px;
+  gap: 8px;
+  margin-top: 16px;
 }
 
 .login-form .btn {
-  margin-top: 4px;
   padding: 12px 18px;
 }
 
@@ -1313,4 +1312,18 @@ p {
   justify-content: flex-end;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+.login-link {
+  align-self: flex-start;
+  justify-self: start;
+  background: transparent;
+  border: 0;
+  padding: 2px 0;
+  color: inherit;
+  font: inherit;
+  font-size: .82rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
 }

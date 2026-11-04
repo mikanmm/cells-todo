@@ -53,6 +53,7 @@ export const api = {
   deleteCategory: (name) => request('DELETE', `/categories/${encodeURIComponent(name)}`),
   me: () => request('GET', '/me'),
   login: (username, password) => request('POST', '/login', { username, password }),
+  register: (username, password, displayName, email, code) => request('POST', '/register', { username, password, displayName, email, code }),
   logout: () => request('POST', '/logout'),
   listTodos: () => request('GET', '/todos'),
   createTodo: (todo) => request('POST', '/todos', todo),

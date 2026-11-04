@@ -7,15 +7,19 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"math"
+	"math/big"
 	"net"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
+	"unicode/utf8"
 )
 
 const (
@@ -52,6 +56,7 @@ func (a *App) routes() http.Handler {
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 	})
 	mux.HandleFunc("POST /api/login", a.handleLogin)
+	mux.HandleFunc("POST /api/register", a.handleRegister)
 	mux.HandleFunc("POST /api/logout", a.handleLogout)
 	mux.HandleFunc("GET /api/me", a.auth(a.handleMe))
 	mux.HandleFunc("GET /api/notify", a.auth(a.handleNotifySettings))
@@ -153,7 +158,7 @@ func (a *App) handleLogin(w http.ResponseWriter, r *http.Request) {
 	var u User
 	var hash string
 	err := a.db.QueryRow(
-		`SELECT id, username, display_name, password_hash FROM users WHERE username = $1`,
+		`SELECT id, username, display_name, password_hash FROM users WHERE lower(username) = lower($1)`,
 		in.Username,
 	).Scan(&u.ID, &u.Username, &u.DisplayName, &hash)
 
@@ -339,4 +344,125 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 
 func writeError(w http.ResponseWriter, status int, msg string) {
 	writeJSON(w, status, map[string]string{"error": msg})
+}
+
+func (a *App) handleRegister(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		Username    string `json:"username"`
+		Email       string `json:"email"`
+		Code        string `json:"code"`
+		DisplayName string `json:"displayName"`
+		Password    string `json:"password"`
+	}
+	if !decode(w, r, &in) {
+		return
+	}
+	ip := clientIP(r)
+	if !a.limiter.allow(ip) {
+		writeError(w, http.StatusTooManyRequests, "Too many attempts. Please try again in 10 minutes.")
+		return
+	}
+	a.limiter.fail(ip)
+	in.Username = strings.TrimSpace(in.Username)
+	in.DisplayName = strings.TrimSpace(in.DisplayName)
+	if in.DisplayName == "" {
+		in.DisplayName = in.Username
+	}
+	if !usernameRe.MatchString(in.Username) {
+		writeError(w, http.StatusBadRequest, "Usernames must contain 3-64 letters, digits, periods, underscores, or hyphens.")
+		return
+	}
+	if utf8.RuneCountInString(in.DisplayName) > 100 || utf8.RuneCountInString(in.Password) < 8 || len(in.Password) > 72 {
+		writeError(w, http.StatusBadRequest, "Use a display name up to 100 characters and a password of at least 8 characters (maximum 72 bytes).")
+		return
+	}
+	email := strings.ToLower(strings.TrimSpace(in.Email))
+	if _, err := normalizeRecipients([]string{email}); err != nil {
+		writeError(w, 400, "Enter a valid email address.")
+		return
+	}
+	if in.Code == "" {
+		var emailUsed, usernameUsed bool
+		if err := a.db.QueryRow(`SELECT EXISTS(SELECT 1 FROM users WHERE registration_mailbox(verified_email) = registration_mailbox($1)),
+            EXISTS(SELECT 1 FROM users WHERE lower(username) = lower($2))`, email, in.Username).Scan(&emailUsed, &usernameUsed); err != nil {
+			serverError(w, "check registration email", err)
+			return
+		}
+		if usernameUsed {
+			writeError(w, http.StatusConflict, "That username is already in use.")
+			return
+		}
+		if emailUsed {
+			writeError(w, http.StatusConflict, "This email already has an account. Please sign in.")
+			return
+		}
+		a.sendRegistrationCode(w, r, email)
+		return
+	}
+	var digest string
+	err := a.db.QueryRow(`UPDATE registration_codes SET attempts = attempts + 1 WHERE email=$1 AND issued > now()-interval '10 minutes' AND attempts < 5 RETURNING digest`, email).Scan(&digest)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		serverError(w, "verify registration", err)
+		return
+	}
+	if err != nil || digest != hashToken(email+":"+in.Code) {
+		writeError(w, 400, "Invalid or expired code. Request a new code if needed.")
+		return
+	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(in.Password), bcryptCost)
+	if err != nil {
+		serverError(w, "register password", err)
+		return
+	}
+	var id int64
+	err = a.db.QueryRow(`WITH verified AS (DELETE FROM registration_codes WHERE email=$4 AND digest=$5 AND issued > now()-interval '10 minutes' RETURNING email)
+ INSERT INTO users(username,display_name,password_hash,verified_email) SELECT $1,$2,$3,email FROM verified RETURNING id`, in.Username, in.DisplayName, string(hash), email, digest).Scan(&id)
+	if errors.Is(err, sql.ErrNoRows) {
+		writeError(w, 400, "Request a new verification code.")
+		return
+	}
+	var conflict *pq.Error
+	if errors.As(err, &conflict) && conflict.Code == "23505" {
+		writeError(w, http.StatusConflict, "That username or email is already in use.")
+		return
+	}
+	if err != nil {
+		serverError(w, "register", err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, map[string]string{"message": "Account created. Please sign in."})
+}
+
+func (a *App) sendRegistrationCode(w http.ResponseWriter, r *http.Request, email string) {
+	sender := a.mail
+	if !strings.EqualFold(sender.Username, "info@mikanm.me") {
+		sender.Password = ""
+	}
+	sender.Username = "info@mikanm.me"
+	sender.Password = env("OTP_SMTP_PASSWORD", sender.Password)
+	if sender.validate() != nil {
+		writeError(w, 503, "Verification email is unavailable. Contact the administrator.")
+		return
+	}
+	number, err := rand.Int(rand.Reader, big.NewInt(1000000))
+	if err != nil {
+		serverError(w, "generate code", err)
+		return
+	}
+	code := fmt.Sprintf("%06d", number)
+	digest := hashToken(email + ":" + code)
+	result, err := a.db.Exec(`INSERT INTO registration_codes(email,digest) VALUES($1,$2) ON CONFLICT(email) DO UPDATE SET digest=excluded.digest, issued=now(), attempts=0 WHERE registration_codes.issued <= now()-interval '1 minute'`, email, digest)
+	if err != nil {
+		serverError(w, "store code", err)
+		return
+	}
+	if n, _ := result.RowsAffected(); n == 0 {
+		writeError(w, 429, "Wait one minute before requesting another code.")
+		return
+	}
+	if err := sender.send(r.Context(), []string{email}, "Verify your Cells account", "Your verification code is "+code+". It expires in 10 minutes."); err != nil {
+		writeError(w, 503, "Could not confirm delivery. Check your inbox or retry in one minute.")
+		return
+	}
+	writeJSON(w, 202, map[string]string{"message": "Check your email for the verification code."})
 }

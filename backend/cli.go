@@ -126,7 +126,7 @@ func runPasswd(args []string) {
 	db := openMigrated()
 	defer db.Close()
 
-	res, err := db.Exec(`UPDATE users SET password_hash = $1 WHERE username = $2`, string(hash), username)
+	res, err := db.Exec(`UPDATE users SET password_hash = $1 WHERE lower(username) = lower($2)`, string(hash), username)
 	if err != nil {
 		die("%v", err)
 	}
@@ -134,6 +134,6 @@ func runPasswd(args []string) {
 		die("account %q not found", username)
 	}
 	// Revoke existing sessions so other devices must sign in again.
-	_, _ = db.Exec(`DELETE FROM sessions WHERE user_id = (SELECT id FROM users WHERE username = $1)`, username)
+	_, _ = db.Exec(`DELETE FROM sessions WHERE user_id = (SELECT id FROM users WHERE lower(username) = lower($1))`, username)
 	fmt.Printf("Password for account %q changed. All previous sessions have been revoked.\n", username)
 }
